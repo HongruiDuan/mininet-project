@@ -32,13 +32,13 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
     if flag:
         index = 0
         #filename1='/home/shlled/mininet-wifi/Log/%s' % filename
-        filename1 = '/home/shlled/mininet-project-fc/Stackelberg/Log/%s' % filename
+        filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/%s' % filename
         f1=open(filename1,'r')
         buffer=f1.readlines()
         lenth=len(buffer)
         total=lenth
         while index<lenth:
-            time.sleep(0.5)
+            time.sleep(0.1)
             now = time.time()
             alpha=buffer[index]
             #alpha=buffer[index].strip()
@@ -59,7 +59,7 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
         f1.close()
     else:
         #filename1='/home/shlled/mininet-wifi/Log/%s' % filename
-        filename1 = '/home/shlled/mininet-project-fc/Stackelberg/Log/%s' % filename
+        filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/%s' % filename
         f1=open(filename1,'r')
         buffer=f1.readlines()
         lenth=len(buffer)
@@ -83,6 +83,7 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
                 sendp(p, iface=iface)
                 miss_pkt.pop(0)
             else:
+                miss_pkt.pop(0)
                 print("can't send the packet\n")
         f1.close()
     # filename2='/home/shlled/mininet-wifi/Log/UE%s.json' % src[7:9]

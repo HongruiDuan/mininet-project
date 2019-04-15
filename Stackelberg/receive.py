@@ -60,7 +60,7 @@ class action:
             index = packet[0][3].load[e4:s5]
             data = packet[0][3].load[e5 + 1:]
             "write the data"
-            filename1 = '/home/shlled/mininet-project-fc/Stackelberg/Log/%s.txt' % packet[0][1].dst[7:8]
+            filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/%s.txt' % packet[0][1].dst[7:8]
             #filename1 = '/media/psf/Home/Documents/GitHub/mininet-project/Stackelberg/Log/%s.txt' % packet[0][1].dst[7:8]
             # if flag:
             #     f1 = open(filename1,'w+')
@@ -164,13 +164,13 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             lenth -= 1
         # print('pkts:', Pkts)
 
-        filename4 = "/home/shlled/mininet-project-fc/Stackelberg/Log/pkts.txt"
+        filename4 = "/home/shlled/mininet-project-duan/Stackelberg/Log/pkts.txt"
         with open(filename4, 'a+') as f4:
             f4.write(str(Pkts) + '\n')
 
     if Flag:
         "consist the file"
-        filename3 = "/home/shlled/mininet-project-fc/Stackelberg/Log/miss.txt"
+        filename3 = "/home/shlled/mininet-project-duan/Stackelberg/Log/miss.txt"
         with open(filename3, 'a+') as f3:
             f3.write('None')
             f3.write('\n')
@@ -178,14 +178,14 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             buffer = f1.readlines()
             lenth = len(buffer)
             #filename2 = '/home/shlled/mininet-wifi/Log/new%s' % filename
-            filename2 = '/home/shlled/mininet-project-fc/Stackelberg/Log/new%s' % filename
+            filename2 = '/home/shlled/mininet-project-duan/Stackelberg/Log/new%s' % filename
             f2 = open(filename2, 'a+')
             current_index = 0
 
             
             # while current_index < total:
             #     i = lenth - 1
-            #     while i >= 0:    
+            #     while i >= 0 and temp < total:    
             #         temp = buffer[i]
             #         span1 = re.search('filename:', temp).span()
             #         s1 = span1[0]
@@ -221,7 +221,7 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
         #filename3 = "/home/shlled/mininet-wifi/Log/miss.txt"
         # if miss_pkt == []:
         #     miss_pkt.append(-1)
-        filename3 = "/home/shlled/mininet-project-fc/Stackelberg/Log/miss.txt"
+        filename3 = "/home/shlled/mininet-project-duan/Stackelberg/Log/miss.txt"
         with open(filename3, 'a+') as f3:
             f3.write(str(miss_pkt))
             f3.write('\n')

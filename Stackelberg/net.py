@@ -149,6 +149,14 @@ def topology():
     # "BS use UE info to decide which UE send which packet"
 
     info("*** Start sending information\n")
+    "before sending clear the cahce"
+    
+    filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/2.txt'
+    with open(filename1,'r+') as f1:
+        f1.truncate()
+
+    
+
     "BS should not control the behavior of UE,what UE has send isn't full"
     thread_list = []
     t1 = MyThread(command, args=(h2, "python receive.py 10.0.0.2 h2-eth0"))
@@ -165,7 +173,7 @@ def topology():
     #miss_pkt = thread_list[0].get_result()
 
     info("*** Start sending the miss pkg\n")
-    filename4 = '/home/shlled/mininet-project-fc/Stackelberg/Log/miss.txt'
+    filename4 = '/home/shlled/mininet-project-duan/Stackelberg/Log/miss.txt'
     #filename4 = '/media/psf/Home/Documents/GitHub/mininet-project/Stackelberg/Log/miss.txt'
     while True:
         with open(filename4, 'r+') as f4:
