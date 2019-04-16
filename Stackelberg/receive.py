@@ -23,8 +23,6 @@ total = 0
 filename1 = ''
 Flag = True
 
-
-# flag = True # before log delete the previous log file
 class action:
     def __init__(self, IP, rc_pkt):
         self.ip = IP
@@ -53,7 +51,7 @@ class action:
             global filename
             global total
             global filename1
-            # global flag
+           
             filename = packet[0][3].load[e1:s3]
             # num = packet[0][3].load[e2+1:s3]
             total = packet[0][3].load[e3:s4]
@@ -68,8 +66,7 @@ class action:
             #     flag=False
 
             f1 = open(filename1, "a+")
-            # filename2='/home/shlled/mininet-wifi/Log/new%s.txt' % filename
-            # f2=open(filename2,'a+')
+
             packet_queue.append(packet[0][3].load)
             self.rc_pkt.append(packet[0][3].load)
             packet_counts.update([key])
@@ -80,35 +77,19 @@ class action:
             f1.write('Receive Packet #%d: %s ==> %s : %s' % (
             sum(packet_counts.values()), packet[0][1].src, packet[0][1].dst, info))
 
-            # "find the start of the data"
-            # span=re.search('data:',packet[0][3].load).span()
-            # start=span[1]
-            # data=packet[0][3].load[start+1:]
-
-            # f2.write(data)
-            # f2.close()
-
             f1.close()
         sys.stdout.flush()
 
 
 def receive(ip, iface, filter="icmp", rc_pkt=[]):
-    # top=int(100-100*loss)
-    # key=random.randint(1,100)
-    # if key in range(1,top):
-    #     sniff(iface = iface, filter= filter, timeout = 20,prn = action(ip, rc_pkt).custom_action)
-    # else:
-    #     print("can't receive the packet\n")
-
+    
     sniff(iface=iface, filter=filter, timeout=10, prn=action(ip, rc_pkt).custom_action)
     "after sniff,check the packet num and return the missing number"
     Pkts = {}
     global filename
     global total
     global filename1
-    # print("global filename:%s\n" % filename)
-    # print("global filename1:%s\n" % filename1)
-    # print("global total:%s\n" % total)
+
     total = int(total)
     for i in range(0, total):
         Pkts["%d" % i] = False
@@ -169,20 +150,21 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             f4.write(str(Pkts) + '\n')
 
     if Flag:
-        "consist the file"
+        "receive all packets,write the miss.txt"
+
         filename3 = "/home/shlled/mininet-project-duan/Stackelberg/Log/miss.txt"
         with open(filename3, 'a+') as f3:
             f3.write('None')
             f3.write('\n')
-        with open(filename1, 'r') as f1:
-            buffer = f1.readlines()
-            lenth = len(buffer)
-            #filename2 = '/home/shlled/mininet-wifi/Log/new%s' % filename
-            filename2 = '/home/shlled/mininet-project-duan/Stackelberg/Log/new%s' % filename
-            f2 = open(filename2, 'a+')
-            current_index = 0
 
-            
+        "finish receive, consist the file"
+        # with open(filename1, 'r') as f1:
+        #     buffer = f1.readlines()
+        #     lenth = len(buffer)
+            #filename2 = '/home/shlled/mininet-wifi/Log/new%s' % filename
+            # filename2 = '/home/shlled/mininet-project-duan/Stackelberg/Log/new%s' % filename
+            # f2 = open(filename2, 'a+')
+            # current_index = 0
             # while current_index < total:
             #     i = lenth - 1
             #     while i >= 0 and temp < total:    
@@ -204,7 +186,7 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             #             f2.write(temp[e5:])
             #             current_index += 1
             #             break;
-            f2.close()
+            # f2.close()
         
 
     else:

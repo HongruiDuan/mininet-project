@@ -25,7 +25,7 @@ def stringToList(s):
 '''
 def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, times=10,send_pkt=[]):
     info(distance)
-    if distance <= 5:
+    if distance <= 4:
         loss = 0
     else:
         loss = 0.3
@@ -86,15 +86,15 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
                 miss_pkt.pop(0)
                 print("can't send the packet\n")
         f1.close()
-    # filename2='/home/shlled/mininet-wifi/Log/UE%s.json' % src[7:9]
-    # #update the pow after sending msg
-    # with open(filename2,'r+') as f2:
-        # buffer = f2.readlines()
-        # lenth = len(buffer)
-        # #data =buffer[0]
-        # data = json.loads(buffer[lenth-1])
-        # data["POWER"]-= pow
-        # json.dump(data,f2)
-        # f2.write("\n")
+    filename2='/home/shlled/mininet-project-duan/Stackelberg/Log/UE%s.json' % src[7:9]
+    #update the pow after sending msg
+    with open(filename2,'r+') as f2:
+        buffer = f2.readlines()
+        lenth = len(buffer)
+        #data =buffer[0]
+        data = json.loads(buffer[lenth-1])
+        data["POWER"]-= pow
+        json.dump(data,f2)
+        f2.write("\n")
 
 fire.Fire(send)

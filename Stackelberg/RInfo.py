@@ -28,7 +28,7 @@ class action:
             packet_counts.update([key])
             info = packet[0][3].load
             #filename = '/home/shlled/mininet-wifi/Log/BSLog.json'
-            filename = '/media/psf/Home/Documents/GitHub/mininet-project/Stackelberg/Log/BSLog.json'
+            filename = '/home/shlled/mininet-project-duan/Stackelberg/Log/BSLog.json'
             # f=open(filename,"a+")
             temp = {}  # temp for storage
             data = []
@@ -46,7 +46,7 @@ class action:
 
 
 def receive(ip, iface, filter="icmp", rc_pkt=[]):
-    sniff(iface=iface, filter=filter, timeout=20, prn=action(ip, rc_pkt).custom_action)
+    sniff(iface=iface, filter=filter, timeout=10, prn=action(ip, rc_pkt).custom_action)
 
 
 def packetQueue():

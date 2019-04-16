@@ -1,6 +1,13 @@
 # -*- coding: utf8 -*-
 import numpy as np
 from sympy import *
+
+# "test log function can be solved?"
+# x = Symbol('x')
+# expr1 = log(5*x+10,10)
+# print solve(expr1,x)
+# "conclusion is that the first params is num expression,not symbol expression"
+
 x = Symbol('x')
 y = Symbol('y')
 # 用来存储代入y之后的方程
