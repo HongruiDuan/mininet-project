@@ -56,7 +56,7 @@ class action:
             # num = packet[0][3].load[e2+1:s3]
             total = packet[0][3].load[e3:s4]
             index = packet[0][3].load[e4:s5]
-            data = packet[0][3].load[e5 + 1:]
+            data = packet[0][3].load[e5:]
             "write the data"
             filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/%s.txt' % packet[0][1].dst[7:8]
             #filename1 = '/media/psf/Home/Documents/GitHub/mininet-project/Stackelberg/Log/%s.txt' % packet[0][1].dst[7:8]
@@ -150,7 +150,7 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             f4.write(str(Pkts) + '\n')
 
     if Flag:
-        "receive all packets,write the miss.txt"
+        "receive all packets, write the miss.txt"
 
         filename3 = "/home/shlled/mininet-project-duan/Stackelberg/Log/miss.txt"
         with open(filename3, 'a+') as f3:
@@ -158,37 +158,36 @@ def receive(ip, iface, filter="icmp", rc_pkt=[]):
             f3.write('\n')
 
         "finish receive, consist the file"
-        # with open(filename1, 'r') as f1:
-        #     buffer = f1.readlines()
-        #     lenth = len(buffer)
-            #filename2 = '/home/shlled/mininet-wifi/Log/new%s' % filename
-            # filename2 = '/home/shlled/mininet-project-duan/Stackelberg/Log/new%s' % filename
-            # f2 = open(filename2, 'a+')
-            # current_index = 0
-            # while current_index < total:
-            #     i = lenth - 1
-            #     while i >= 0 and temp < total:    
-            #         temp = buffer[i]
-            #         span1 = re.search('filename:', temp).span()
-            #         s1 = span1[0]
-            #         e1 = span1[1]
-            #         span3 = re.search('total:', temp).span()
-            #         s3 = span3[0]
-            #         e3 = span3[1]
-            #         span4 = re.search('index:', temp).span()
-            #         s4 = span4[0]
-            #         e4 = span4[1]
-            #         span5 = re.search('data:', temp).span()
-            #         s5 = span5[0]
-            #         e5 = span5[1]
-            #         T_index = int(temp[e4:s5])
-            #         if T_index == current_index:
-            #             f2.write(temp[e5:])
-            #             current_index += 1
-            #             break;
-            # f2.close()
-        
-
+        with open(filename1, 'r') as f1:
+            buffer = f1.readlines()
+            lenth = len(buffer)
+            # filename2 = '/home/shlled/mininet-wifi/Log/new%s' % filename
+            filename2 = '/home/shlled/mininet-project-duan/Stackelberg/Log/new%s' % filename
+            f2 = open(filename2, 'w+')
+            current_index = 0
+            while current_index < total:
+                i = 0
+                while i <total:    
+                    temp = buffer[i]
+                    span1 = re.search('filename:', temp).span()
+                    s1 = span1[0]
+                    e1 = span1[1]
+                    span3 = re.search('total:', temp).span()
+                    s3 = span3[0]
+                    e3 = span3[1]
+                    span4 = re.search('index:', temp).span()
+                    s4 = span4[0]
+                    e4 = span4[1]
+                    span5 = re.search('data:', temp).span()
+                    s5 = span5[0]
+                    e5 = span5[1]
+                    T_index = int(temp[e4:s5])
+                    if T_index == current_index:
+                        f2.write(temp[e5:])
+                        current_index += 1
+                        break;
+                    i +=1
+            f2.close()
     else:
         "calculate the loss"
 

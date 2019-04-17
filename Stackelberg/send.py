@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from scapy.all import sniff, sendp
 from scapy.all import Packet
 from scapy.all import ShortField, IntField, LongField, BitField
@@ -23,8 +25,10 @@ def stringToList(s):
     --times the max time of sending
     --flag  if flag = false ,that means sending the missing packet using miss_pkt params
 '''
-def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, times=10,send_pkt=[]):
+def send(src, iface, dst, distance, pow, gain, filename, flag = True, miss_pkt='',times=10,send_pkt=[]):
     info(distance)
+    count = 0.0 # 记录发送了多少个包
+    total = 0
     if distance <= 4:
         loss = 0
     else:
@@ -52,6 +56,7 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
             key=random.randint(1,100)
             if key in range(1,top):
                 sendp(p, iface = iface)
+                count += 1
             else:
                 print("can't send the packet\n")
 
@@ -86,15 +91,20 @@ def send(src, iface, dst, distance, filename,flag = True,miss_pkt='',pow=5, time
                 miss_pkt.pop(0)
                 print("can't send the packet\n")
         f1.close()
-    filename2='/home/shlled/mininet-project-duan/Stackelberg/Log/UE%s.json' % src[7:9]
-    #update the pow after sending msg
-    with open(filename2,'r+') as f2:
-        buffer = f2.readlines()
-        lenth = len(buffer)
-        #data =buffer[0]
-        data = json.loads(buffer[lenth-1])
-        data["POWER"]-= pow
-        json.dump(data,f2)
-        f2.write("\n")
+    filename2='/home/shlled/mininet-project-duan/Stackelberg/Log/UE%s.json' % src[7:8]
+    
+    #第一次发送包时才更新能量和收益，重传时不考虑
+    if flag:
+        with open(filename2,'r+') as f2:
+            buffer = f2.readlines()
+            lenth = len(buffer)
+            
+            data = json.loads(buffer[lenth-1])
+            data["POWER"] -= pow
+            data["Gains"] += gain 
+            loss = (total - count) / total
+            data["LOSS"] = loss
+            json.dump(data,f2)
+            f2.write("\n")
 
 fire.Fire(send)

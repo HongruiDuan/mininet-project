@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 #!/usr/bin/python
 from mininet.node import Controller
 from mininet.log import setLogLevel, info
@@ -7,15 +8,10 @@ from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
 # from send import send
 # from receive import receive
-
 from Params.params import getDistance
-
-from game import game
-
 
 import threading
 import json
-
 
 class MyThread(threading.Thread):
 
@@ -43,7 +39,6 @@ def command(host, arg):
 
 
 # "function for create a thread for sending a certern packet "
-# def sendpacket(src,dst,num):
 
 
 def topology():
@@ -64,7 +59,7 @@ def topology():
     h3 = net.addStation('h3', position='0,5,0', ip = '10.0.0.3',mac='00:00:00:00:00:03', range=5)
     # h4 = net.addStation('h4', position='5,5,0', ip = '10.0.0.4',mac='00:00:00:00:00:04', range=5)
     # h5 = net.addStation('h5', position='5,5,0', ip = '10.0.0.5',mac='00:00:00:00:00:05', range=5)
-    # h6 = net.addStation('h6', position='5,5,0', ip = '10.0.0.6',mac='00:00:00:00:00:06', range=5)
+    h6 = net.addStation('h6', position='5,5,0', ip = '10.0.0.6',mac='00:00:00:00:00:06', range=5)
     BS = net.addStation('BS', position='5,5,0', ip = '10.0.0.7',mac='00:00:00:00:00:07', range=5)
 
     c0 = net.addController('c0')
@@ -84,7 +79,7 @@ def topology():
     net.addLink(h3, ap1)
     # net.addLink(h4, ap1)
     # net.addLink(h5, ap1)
-    # net.addLink(h6, ap1)
+    net.addLink(h6, ap1)
     net.addLink(BS, ap1)
     # net.plotGraph(max_x=100, max_y=100)
 
@@ -122,9 +117,6 @@ def topology():
         "h1":{},
         "h2":{},
         "h3":{}
-        # "h4":{},
-        # "h5":{},
-        # "h6":{}
     }
     BSLog["h1"]["flag"]=False
     BSLog["h2"]["flag"]=False
@@ -141,21 +133,21 @@ def topology():
                 BSLog["h1"]["flag"] = True
                 BSLog["h1"]["IP"] = temp[0]["UEIP"]
                 BSLog["h1"]["POWER"] = temp[0]["UEPOWER"]
-                BSLog["h1"]["PRICE"] = temp[0]["UEPRICE"]
+                # BSLog["h1"]["PRICE"] = temp[0]["UEPRICE"]
                 BSLog["h1"]["LOSS"] = temp[0]["UELOSS"]
                 BSLog["h1"]["MAX"] = temp[0]["UEMAX"]
             elif temp[0]["UEIP"] == "10.0.0.2" and BSLog["h2"]["flag"] == False:
                 BSLog["h2"]["flag"] = True
                 BSLog["h2"]["IP"] = temp[0]["UEIP"]
                 BSLog["h2"]["POWER"] = temp[0]["UEPOWER"]
-                BSLog["h2"]["PRICE"] = temp[0]["UEPRICE"]
+                # BSLog["h2"]["PRICE"] = temp[0]["UEPRICE"]
                 BSLog["h2"]["LOSS"] = temp[0]["UELOSS"]
                 BSLog["h2"]["MAX"] = temp[0]["UEMAX"]
             elif temp[0]["UEIP"] == "10.0.0.3" and BSLog["h3"]["flag"] == False:
                 BSLog["h3"]["flag"] = True
                 BSLog["h3"]["IP"] = temp[0]["UEIP"]
                 BSLog["h3"]["POWER"] = temp[0]["UEPOWER"]
-                BSLog["h3"]["PRICE"] = temp[0]["UEPRICE"]
+                # BSLog["h3"]["PRICE"] = temp[0]["UEPRICE"]
                 BSLog["h3"]["LOSS"] = temp[0]["UELOSS"]
                 BSLog["h3"]["MAX"] = temp[0]["UEMAX"]
             lenth-=1
@@ -165,31 +157,62 @@ def topology():
     
     "BS use UE info to decide which UE send which packet"
 
-    "get the price and the pow,now create the Queue"
+    "求出均衡时每个博弈对的价格和功率，然后排序"
 
+    Balance = []
+    result = [5,5,5,5]
+    for i in range(1,4):
+        BSLog["h%d" % i]["P_k"] = result[0]+i
+        BSLog["h%d" % i]["b_k"] = result[1]+i
+        BSLog["h%d" % i]["F_BS"] = result[2]+i
+        BSLog["h%d" % i]["F_UE"] = result[3]+i
+        Balance.append(BSLog["h%d" % i])
+    Balance = sorted(Balance,key = lambda x:x['F_BS'],reverse = True)
+    print(Balance)
+    # result1 = game()
 
-
-
-    info("*** Start sending information\n")
+    "确定用哪个中继设备来进行传输"
+    UEIP = Balance[0]["IP"]
+    
+    if UEIP == '10.0.0.1':
+        host = h1
+        hostip = '10.0.0.1'
+        hostname = 'h1'
+        P_k = Balance[0]["P_k"]
+        F_UE = Balance[0]["F_UE"]
+    elif UEIP == '10.0.0.2':
+        host = h2
+        hostip = '10.0.0.2'
+        hostname = 'h2'
+        P_k = Balance[0]["P_k"]
+        F_UE = Balance[0]["F_UE"]
+    else :
+        host = h3
+        hostip = '10.0.0.3'
+        hostname = 'h3'
+        P_k = Balance[0]["P_k"]
+        F_UE = Balance[0]["F_UE"]
+    print("best choice:",hostname)
+    info("*** Start sending first information\n")
 
     "before sending clear the cahce"
     
-    filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/2.txt'
+    filename1 = '/home/shlled/mininet-project-duan/Stackelberg/Log/6.txt'
     with open(filename1,'r+') as f1:
         f1.truncate()
 
     "BS should not control the behavior of UE,what UE has send isn't full"
     thread_list = []
-    t1 = MyThread(command, args=(h2, "python receive.py 10.0.0.2 h2-wlan0"))
-
+    t1 = MyThread(command, args=(h6, "python receive.py 10.0.0.6 h6-wlan0"))
     thread_list.append(t1)
+    distance = getDistance(host, h6)
 
-    distance = getDistance(h1, h2)
-    # print("distance:%d" % distance)
-    # loss = float(distance)/ 20.0
-    # print("loss:%f" % loss)
-    t2 = MyThread(command, args=(h1, "python send.py  10.0.0.1 h1-wlan0 10.0.0.2 %s msg.txt" % distance))
-    # t2 = MyThread(command, args=(h1, "python send.py  10.0.0.1 h1-eth0 10.0.0.2 %s msg.txt" % distance))
+    # info("python send.py  %s %s-wlan0 10.0.0.6 %s %s %s msg.txt\n" % (hostip, hostname, distance, P_k, F_UE))
+
+    t2 = MyThread(command, args=(host,
+             "python send.py  %s %s-wlan0 10.0.0.6 %s %s %s msg.txt" % (hostip, hostname, distance, P_k, F_UE)))
+    # t2 = MyThread(command, args=(h1, "python send.py  10.0.0.1 h1-wlan0 10.0.0.2 %s 5 5 msgs.txt" % (distance)))
+    
     thread_list.append(t2)
     t1.start()
     t2.start()
@@ -207,16 +230,19 @@ def topology():
         if miss_pkt == 'None\n':
             print("finish collet")
             break
-        t3 = threading.Thread(target=command, args=(h2, "python receive.py 10.0.0.2 h2-wlan0"))
+        t3 = threading.Thread(target=command, args=(h6, "python receive.py 10.0.0.6 h6-wlan0"))
         thread_list.append(t3)
+        # print("python send.py  %s %s-wlan0 10.0.0.6 %s %s %s msg.txt False '%s'\n" % (hostip, hostname, distance, P_k, F_UE, miss_pkt))
         t4 = threading.Thread(target=command,
-                              args=(h1, "python send.py 10.0.0.1 h1-wlan0 10.0.0.2 %s msg.txt False '%s'" % (distance, miss_pkt)))
+                              args=(host, 
+                            #   "python send.py 10.0.0.1 h1-wlan0 10.0.0.2 %s 5 5 msg.txt False '%s'" % (distance, miss_pkt)))
+                              "python send.py  %s %s-wlan0 10.0.0.6 %s %s %s msg.txt False '%s'" % (hostip, hostname, distance, P_k, F_UE, miss_pkt)))
         thread_list.append(t4)
         t3.start()
         t4.start()
         for t in thread_list:
             t.join()
-            
+
     info("*** Running CLI\n")
     CLI_wifi(net)
 
