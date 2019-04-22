@@ -12,7 +12,7 @@ from Params.params import getDistance
 
 import threading
 import json
-
+from game import game
 class MyThread(threading.Thread):
 
     def __init__(self, func, args=()):
@@ -134,46 +134,54 @@ def topology():
                 BSLog["h1"]["IP"] = temp[0]["UEIP"]
                 BSLog["h1"]["POWER"] = temp[0]["UEPOWER"]
                 # BSLog["h1"]["PRICE"] = temp[0]["UEPRICE"]
-                BSLog["h1"]["LOSS"] = temp[0]["UELOSS"]
+                BSLog["h1"]["Integrity"] = temp[0]["Integrity"]
                 BSLog["h1"]["MAX"] = temp[0]["UEMAX"]
             elif temp[0]["UEIP"] == "10.0.0.2" and BSLog["h2"]["flag"] == False:
                 BSLog["h2"]["flag"] = True
                 BSLog["h2"]["IP"] = temp[0]["UEIP"]
                 BSLog["h2"]["POWER"] = temp[0]["UEPOWER"]
                 # BSLog["h2"]["PRICE"] = temp[0]["UEPRICE"]
-                BSLog["h2"]["LOSS"] = temp[0]["UELOSS"]
+                BSLog["h2"]["Integrity"] = temp[0]["Integrity"]
                 BSLog["h2"]["MAX"] = temp[0]["UEMAX"]
             elif temp[0]["UEIP"] == "10.0.0.3" and BSLog["h3"]["flag"] == False:
                 BSLog["h3"]["flag"] = True
                 BSLog["h3"]["IP"] = temp[0]["UEIP"]
                 BSLog["h3"]["POWER"] = temp[0]["UEPOWER"]
                 # BSLog["h3"]["PRICE"] = temp[0]["UEPRICE"]
-                BSLog["h3"]["LOSS"] = temp[0]["UELOSS"]
+                BSLog["h3"]["Integrity"] = temp[0]["Integrity"]
                 BSLog["h3"]["MAX"] = temp[0]["UEMAX"]
             lenth-=1
             if BSLog["h1"]["flag"] == True and BSLog["h2"]["flag"] == True and BSLog["h3"]["flag"]==True:
                break
-    print(BSLog)
+    # print(BSLog)
     
     "BS use UE info to decide which UE send which packet"
-
     "求出均衡时每个博弈对的价格和功率，然后排序"
-
     Balance = []
-    result = [5,5,5,5]
+    
     for i in range(1,4):
-        BSLog["h%d" % i]["P_k"] = result[0]+i
-        BSLog["h%d" % i]["b_k"] = result[1]+i
-        BSLog["h%d" % i]["F_BS"] = result[2]+i
-        BSLog["h%d" % i]["F_UE"] = result[3]+i
+        # print(game(BSLog["h%d" % i]["Integrity"]))
+        result = game(BSLog["h%d" % i]["Integrity"]) #博弈函数，传入参数为上一轮的完整性因子
+        BSLog["h%d" % i]["P_k"] = result[0]#将返回结果写入字典
+        BSLog["h%d" % i]["b_k"] = result[1]
+        BSLog["h%d" % i]["F_BS"] = result[2]
+        BSLog["h%d" % i]["F_UE"] = result[3]
         Balance.append(BSLog["h%d" % i])
-    Balance = sorted(Balance,key = lambda x:x['F_BS'],reverse = True)
+    Balance = sorted(Balance,key = lambda x:x['F_BS'],reverse = True)#将中继设备按照基站收益排序
     print(Balance)
     # result1 = game()
 
     "确定用哪个中继设备来进行传输"
-    UEIP = Balance[0]["IP"]
-    
+    index = 0 
+    K = len(Balance)
+
+    while index < K:
+        Power = Balance[index]["POWER"]
+        Pow = Balance[index]["P_k"]
+        if Power > Pow:
+            UEIP = Balance[index]["IP"]
+            break
+        index += 1
     if UEIP == '10.0.0.1':
         host = h1
         hostip = '10.0.0.1'
@@ -186,12 +194,19 @@ def topology():
         hostname = 'h2'
         P_k = Balance[0]["P_k"]
         F_UE = Balance[0]["F_UE"]
-    else :
+    elif UEIP == '10.0.0.3':
         host = h3
         hostip = '10.0.0.3'
         hostname = 'h3'
         P_k = Balance[0]["P_k"]
         F_UE = Balance[0]["F_UE"]
+    else :
+        "基站的功率和收益怎么计算还没想好"
+        host = BS
+        hostip = '10.0.0.7'
+        hostname = 'BS'
+        P_k = 0
+        F_UE = 0
     print("best choice:",hostname)
     info("*** Start sending first information\n")
 

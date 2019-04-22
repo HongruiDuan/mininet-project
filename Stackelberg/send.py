@@ -27,12 +27,12 @@ def stringToList(s):
 '''
 def send(src, iface, dst, distance, pow, gain, filename, flag = True, miss_pkt='',times=10,send_pkt=[]):
     info(distance)
-    count = 0.0 # 记录发送了多少个包
+    count = 0.0 # 记录实际发送了多少个包
     total = 0
     if distance <= 4:
         loss = 0
     else:
-        loss = 0.3
+        loss = 0.1
     if flag:
         index = 0
         #filename1='/home/shlled/mininet-wifi/Log/%s' % filename
@@ -97,14 +97,12 @@ def send(src, iface, dst, distance, pow, gain, filename, flag = True, miss_pkt='
     if flag:
         with open(filename2,'r+') as f2:
             buffer = f2.readlines()
-            lenth = len(buffer)
-            
+            lenth = len(buffer)            
             data = json.loads(buffer[lenth-1])
             data["POWER"] -= pow
             data["Gains"] += gain 
-            loss = (total - count) / total
-            data["LOSS"] = loss
+            integ =  count / total
+            data["Integrity"] = integ
             json.dump(data,f2)
             f2.write("\n")
-
 fire.Fire(send)

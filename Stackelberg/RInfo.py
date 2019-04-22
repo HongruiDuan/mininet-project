@@ -36,7 +36,7 @@ class action:
             temp["UEIP"] = packet[0][1].src
             temp["UEPOWER"] = info["POWER"]
             temp["UEPRICE"] = info["PRICE"]
-            temp["UELOSS"] = info["LOSS"]
+            temp["Integrity"] = info["Integrity"]
             temp["UEMAX"] = info["MAX"]
             data.append(temp)
             with open(filename, 'a+') as f:
