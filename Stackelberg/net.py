@@ -12,7 +12,7 @@ from Params.params import getDistance
 
 import threading
 import json
-from game import game
+from newgame import game
 class MyThread(threading.Thread):
 
     def __init__(self, func, args=()):

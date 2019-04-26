@@ -98,3 +98,8 @@ None
 None
 [4, 11, 18]
 None
+[1, 10, 13]
+[10]
+None
+[16]
+None
