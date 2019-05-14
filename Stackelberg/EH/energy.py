@@ -11,7 +11,7 @@ def energy(sta, ap, time):
     apPosition = ap.params['position'][0:2]
     distance = math.sqrt((staPosition[0] - apPosition[0]) ** 2 + (staPosition[1] - apPosition[1]) ** 2)
     info('distance : %.2fm\n' % distance)
-    txpower = float(ap.params['txpower'][0])
+    txpower = float(ap.params['txpower'][0]) #根据基站的发射功率计算能量收集
     info('txpower: %.3fdbm\n' % txpower)
     transmitPower = 10 ** (txpower / 10) / 1000
     info('transmitPower: %fW\n' % transmitPower)

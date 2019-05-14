@@ -1,4 +1,4 @@
-{"Integrity": 0.21052631578947367, "PRICE": 45, "Gains": 20, "POWER": 60, "MAX": 60}
-{"Integrity": 0.42105263157894735, "PRICE": 45, "Gains": 25, "POWER": 55, "MAX": 60}
-{"Integrity": 0.73541648956, "PRICE": 45, "Gains": 30, "POWER": 30, "MAX": 60}
-{"MAX": 60, "PRICE": 45, "Integrity": 0.9473684210526315, "Gains": 31.0, "POWER": 29.0}
+{"Integrity": 0.21052631578947367, "PRICE": 45, "Gains": 0, "POWER": 60, "MAX": 60}
+{"MAX": 60, "PRICE": 45, "Integrity": 0.9473684210526315, "Gains": 107.204756405, "POWER": 45}
+{"MAX": 60, "PRICE": 45, "Integrity": 1.0, "Gains": 214.40951281, "POWER": 30}
+{"MAX": 60, "PRICE": 45, "Integrity": 1.0, "Gains": 321.614269215, "POWER": 15}
