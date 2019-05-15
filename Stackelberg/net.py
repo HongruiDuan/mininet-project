@@ -71,33 +71,23 @@ def topology():
 
     info("*** Configuring wifi nodes\n")
     net.configureWifiNodes()
-    # net.plotGraph(max_x=20, max_y=20)
 
     info("*** Adding Link\n")
     # net.addLink(ap1, ap2, cls=_4address)  
-    net.addLink(h1, ap1, bw=10, loss=0, delay='1ms')
-    net.addLink(h2, ap1, bw=10, loss=0, delay='1ms')
-    net.addLink(h3, ap1, bw=10, loss=0, delay='1ms')
+    net.addLink(h1, ap1)
+    net.addLink(h2, ap1)
+    net.addLink(h3, ap1)
     # net.addLink(h4, ap1)
     # net.addLink(h5, ap1)
-    net.addLink(h6, ap1, bw=10, loss=0, delay='1ms')
-    net.addLink(BS, ap1, bw=10, loss=0, delay='1ms')
+    net.addLink(h6, ap1)
+    net.addLink(BS, ap1)
     # net.plotGraph(max_x=100, max_y=100)
-    
+
     info("*** Starting network\n")
     net.build()
     c0.start()
     ap1.start([c0])
     #ap2.start([c0])
-
-    print "now print the link info before D2D cooperation"
-    net.iperf((h1,BS))
-    net.iperf((h2,BS))
-    net.iperf((h3,BS))
-    links1 = h1.connectionsTo(BS)
-    links2 = h2.connectionsTo(BS)
-    links3 = h3.connectionsTo(BS)
-    print links1,links2,links3
 
     info("*** first cycle BS collect the info of UE\n")
     thread_list = []
@@ -163,9 +153,8 @@ def topology():
             lenth-=1
             if BSLog["h1"]["flag"] == True and BSLog["h2"]["flag"] == True and BSLog["h3"]["flag"]==True:
                break
+    
     # print(BSLog)
-    # for i in range(0,3):
-    #     print(BSLog["h%d" % i])
     
     "BS use UE info to decide which UE send which packet"
     "求出均衡时每个博弈对的价格和功率，然后排序"
@@ -174,7 +163,7 @@ def topology():
     for i in range(1,4):
         # print(game(BSLog["h%d" % i]["Integrity"]))
         result = game(BSLog["h%d" % i]["Integrity"]) #博弈函数，传入参数为上一轮的完整性因子
-        BSLog["h%d" % i]["P_k"] = result[0]#将返回结果写入字典
+        BSLog["h%d" % i]["N1"] = result[0]#将返回结果写入字典
         BSLog["h%d" % i]["b_k"] = result[1]
         BSLog["h%d" % i]["F_BS"] = result[2]
         BSLog["h%d" % i]["F_UE"] = result[3]
@@ -182,17 +171,20 @@ def topology():
     Balance = sorted(Balance,key = lambda x:x['F_BS'],reverse = True)#将中继设备按照基站收益排序
     # print(Balance)
     # result1 = game()
-    for i in range(1,4):
-        print "h%d:" % i,BSLog["h%d" % i],'\t'
+    for i in range(0,3):
+        print Balance[i]
     "确定用哪个中继设备来进行传输"
     index = 0 
     K = len(Balance)
-    UEIP =''
+    global UEIP
+    UEIP = ''
     while index < K:
         Power = Balance[index]["POWER"]
-        Pow = Balance[index]["P_k"]
-        if Power > Pow:
-            global UEIP
+        # Pow = Balance[index]["P_k"]
+        N1 = Balance[index]["N1"]
+        Pow = 2
+        if Power > Pow * N1 :
+            # global UEIP
             UEIP = Balance[index]["IP"]
             break
         index += 1
@@ -200,20 +192,20 @@ def topology():
         host = h1
         hostip = '10.0.0.1'
         hostname = 'h1'
-        P_k = Balance[0]["P_k"]
-        F_UE = Balance[0]["F_UE"]
+        P_k = Balance[index]["N1"]
+        F_UE = Balance[index]["F_UE"]
     elif UEIP == '10.0.0.2':
         host = h2
         hostip = '10.0.0.2'
         hostname = 'h2'
-        P_k = Balance[0]["P_k"]
-        F_UE = Balance[0]["F_UE"]
+        P_k = Balance[index]["N1"]
+        F_UE = Balance[index]["F_UE"]
     elif UEIP == '10.0.0.3':
         host = h3
         hostip = '10.0.0.3'
         hostname = 'h3'
-        P_k = Balance[0]["P_k"]
-        F_UE = Balance[0]["F_UE"]
+        P_k = Balance[index]["N1"]
+        F_UE = Balance[index]["F_UE"]
     else :
         "基站的功率和收益怎么计算还没想好"
         host = BS
@@ -221,6 +213,7 @@ def topology():
         hostname = 'BS'
         P_k = 0
         F_UE = 0
+    print "UEIP:",UEIP
     print("best choice:",hostname)
     info("*** Start sending first information\n")
 
@@ -271,27 +264,10 @@ def topology():
         t4.start()
         for t in thread_list:
             t.join()
-    #先删除之前的链路
-    links1 = h1.connectionsTo(ap1)
-    links2 = h2.connectionsTo(ap1)
-    links3 = h3.connectionsTo(ap1)
-    print links1,links2,links3
-    # del links1,links2,links3
-    #设置D2D协助之后带宽
-    net.addLink(h1, ap1, bw=20, loss=0, delay='1ms')
-    net.addLink(h2, ap1, bw=20, loss=0, delay='1ms')
-    net.addLink(h3, ap1, bw=20, loss=0, delay='1ms')
-    # net.addLink(h4, ap1)
-    # net.addLink(h5, ap1)
-    net.addLink(h6, ap1, bw=20, loss=0, delay='1ms')
-    net.addLink(BS, ap1, bw=20, loss=0, delay='1ms')
+
     info("*** Running CLI\n")
     CLI_wifi(net)
-    print "now print the link info after D2D cooperation"
-    net.iperf((h1,BS))
-    net.iperf((h2,BS))
-    net.iperf((h3,BS))
-    
+
     info("*** Stopping network\n")
     net.stop()
 

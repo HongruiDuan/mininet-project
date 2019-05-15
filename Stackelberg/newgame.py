@@ -36,7 +36,7 @@ def game(S):
     b = C_BS + C*N*S/(log(a)*(a+S*N1))
     U_BS = C*N*log(a+S*N1,a)-b*N1-(N-N1)*C_BS
     result = [N1,b,U_BS,U_DU]
-    print result
+    # print result
     return result
 if __name__ == '__main__':
     game(0.9)
