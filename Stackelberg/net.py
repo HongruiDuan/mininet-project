@@ -6,6 +6,7 @@ from mn_wifi.link import wmediumd, _4address
 from mn_wifi.cli import CLI_wifi
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+from EH.energy import energy
 # from send import send
 # from receive import receive
 from Params.params import getDistance
@@ -29,10 +30,7 @@ class MyThread(threading.Thread):
         except Exception:
             return None
 
-
 "function for exec cmd"
-
-
 def command(host, arg):
     result = host.cmd(arg)
     return result
@@ -88,7 +86,9 @@ def topology():
     c0.start()
     ap1.start([c0])
     #ap2.start([c0])
-
+    info("*** start energy harvest")
+    energy(h2, ap1, 10)
+    
     info("*** first cycle BS collect the info of UE\n")
     thread_list = []
     t1 = threading.Thread(target=command, args=(BS,"python RInfo.py 10.0.0.7 BS-wlan0"))

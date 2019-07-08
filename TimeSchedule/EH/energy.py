@@ -8,7 +8,7 @@ import json
 
 def energy(sta, ap, time):
     staPosition = sta.params['position'][0:2]
-    num = str(sta)[1]
+    num = str(sta)[2]
     apPosition = ap.params['position'][0:2]
     distance = math.sqrt((staPosition[0] - apPosition[0]) ** 2 + (staPosition[1] - apPosition[1]) ** 2)
     info('distance : %.2fm\n' % distance)
@@ -26,8 +26,7 @@ def energy(sta, ap, time):
         t += interval
     info('after %ds receive energy : %fJ\n' % (time, receiveEnergy))
     pow = float(receiveEnergy)
-    filename = "/home/shlled/mininet-project-duan/Stackelberg/Log/UE%c.json" % num
-    # print filename
+    filename = "/home/shlled/mininet-project-duan/TimeSchedule/Log/DU%c.json" % num
     with open(filename,'r+') as f:
         buffer = f.readlines()
         lenth = len(buffer)            
@@ -35,6 +34,3 @@ def energy(sta, ap, time):
         data["POWER"] += pow
         json.dump(data,f)
         f.write("\n")
-
-    
-    
