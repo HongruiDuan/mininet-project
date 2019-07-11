@@ -26,7 +26,7 @@ def energy(sta, ap, time):
         t += interval
     info('after %ds receive energy : %fJ\n' % (time, receiveEnergy))
     pow = float(receiveEnergy)
-    filename = "/home/shlled/mininet-project-duan/TimeSchedule/Log/DU%c.json" % num
+    filename = "/home/shlled/mininet-project-duan/TimeSchedule/Log/UE%c.json" % num
     with open(filename,'r+') as f:
         buffer = f.readlines()
         lenth = len(buffer)            
