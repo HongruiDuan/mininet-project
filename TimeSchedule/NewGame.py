@@ -6,7 +6,7 @@ from math import log
 '''
 新的博弈模型
 '''
-def game(S):
+def game(S,C = 3,C_DU = 2,C_BS = 1,N = 32,a = 2,e = 0.1):
     C = 3 #RU对包的基本支付单价
     C_DU = 2 #DU传输一个包的成本
     C_BS = 1    #BS传输一个包的成本

@@ -78,7 +78,7 @@ def topology():
     FileIndex = 0 #发送文件位置
     dst = ['10.0.0.2','10.0.0.3','10.0.0.4']
     for i in range(0,TotalTime):  #有100个最小时隙，AP广播100轮，DU选择接收能量和信息，RU直接接收信息  
-        "此处AP应该改成广播，APsned 的 dst应该不止一个"  
+        "此处AP应该改成广播，APsend 的 dst应该不止一个"  
         t1 = threading.Thread(target=command, args = (AP,"python APBroadCast.py 10.0.0.1 AP-wlan0 '%s' %s" %(dst,FileIndex)))#AP广播一个数据包
         t2 = threading.Thread(target=command, args = (RU,"python Receive.py 10.0.0.2 RU-wlan0 0.5"))
         top1 = int(100-100*p1)
