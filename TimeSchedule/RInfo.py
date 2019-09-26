@@ -27,10 +27,9 @@ class action:
             self.rc_pkt.append(packet[0][3].load)
             packet_counts.update([key])
             info = packet[0][3].load
-            #filename = '/home/shlled/mininet-wifi/Log/BSLog.json'
-            filename = '/home/shlled/mininet-project-duan/Stackelberg/Log/BSLog.json'
-            # f=open(filename,"a+")
-            temp = {}  # temp for storage
+           
+            filename = '/home/shlled/mininet-project-duan/TimeSchedule/Log/BSLog.json'
+            temp = {}  
             data = []
             info = json.loads(info)
             temp["UEIP"] = packet[0][1].src
