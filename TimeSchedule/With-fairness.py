@@ -21,7 +21,7 @@ from fairness import Fairness
 def command(host, arg):
     result = host.cmd(arg)
     return result
-
+"线程类"
 class MyThread(threading.Thread):
 
     def __init__(self, func, args=()):
@@ -38,11 +38,6 @@ class MyThread(threading.Thread):
         except Exception:
             return None
 #设备类，存储设备的信息
-'''
-第一轮时初始化，在结束时将信息写入自己的缓存文件
-如何更新信息
-
-'''
 class UE:
     count = 0
     def __init__(self, host, name, ip, port, link_e, gains=0.0, F_BS=0.0, F_UE=0.0, N1=0.0, b=0.0, Power = 0, rank=0, flag=False):
@@ -94,37 +89,11 @@ def topology():
     c0.start()
     ap1.start([c0])
     #设备初始化完毕，开始进行调度
-    "总共进行10轮数据传输"
+    "总共进行20轮数据传输"
     Total_r = 20
     round = 0
     fair_result = []
     while round<Total_r:
-
-        # info("***%d round AP collect info of UEs\n"% round)
-        # try:
-        #     thread.start_new_thread(command,(AP,"python RInfo.py 10.1.0.1 AP-wlan0"))
-        #     print("python SInfo.py %s %s 10.1.0.1" % (UES[0].ip, UES[0].port))
-        #     # print("python RInfo.py 10.1.0.1 AP-wlan0\n")
-        #     thread.start_new_thread(command,(AP,"python RInfo.py 10.1.0.1 AP-wlan0"))
-        #     for i in range(0,9):
-        #         # print("python SInfo.py %s %s 10.1.0.1"%(UES[i].ip,UES[i].port))
-        #         threading._start_new_thread(command,(UES[i].host,"python SInfo.py %s %s 10.1.0.1"%(UES[i].ip,UES[i].port)))   
-        # except:
-        #     print("%d round error\n" %round)
-        # time.sleep(2.0 * UE.count) #根据中继设备的数量来确定等待时间
-        # info("*** %d round info collect finish\n" % round)
-        # 统计完设备信息之后将信息从文件中读取
-        # 先采取直接对数据操作而不是真正的发送和接收包
-        # filename1 = "/home/shlled/mininet-wifi/Log/BSLog.json"
-        # with open(filename1,'r') as f1:
-        #     buffer = f1.readlines()
-        #     lenth = len(buffer)
-        #     while lenth>0:
-        #         temp = buffer[lenth-1]
-        #         temp = json.loads(temp)
-        #         # print(temp,"\n")
-        #         #todo:如何确定所有的设备都已经接收完毕 
-
         #根据设备的丢包率来计算博弈结果，写入中继设备
         for i in range(0,20):
             result = game(UES[i].link_e)
@@ -169,62 +138,24 @@ def topology():
                             top1 = int(100-100*queue[j].link_e)
                             key1 = random.randint(1,1000)
                             "中继设备随机接收信息或者能量"
-                            #
                             if key1 in range(1,top1):
                                 pass
                                 # info("DU%d infomation\n"% j)
-                                # t3 = threading.Thread(target = command,args = (UES[i].host,"python Receive.py %s %s 0.1"%(UES[j].ip,UES[j].port)))
                             else:
                                 # info("DU%d energy\n"% j)
                                 egy = energy(UES[j].host, AP, 0.011/TotalTime)
-                                UES[j].Power += egy #收集的能量太小，*100使得收集的能量有利于发送和接收信息
-                                # t3 = threading.Thread(target = energy,args = (UES[j].host,AP,1))
-                            # t3.start()
-                    # for i in range(0,20):
-                    #     print(queue[i].Power,'\n')   
-                    #先开始监听进程再开始发送进程
-                    # t2.start()
-                    # t1.start()
-                    # t1.join()
-                    # t2.join()
-                    # t3.join()
+                                UES[j].Power += egy 
+                                
+                   
                 #被选中的中继设备将传输满足博弈均衡的有效信息量给请求的客户端设备
                 #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
                 "选中的中继设备通过中继减少能量，增加收益"
-
                 queue[num].Power -= queue[num].N1*0.00004
                 queue[num].gains += queue[num].F_UE
                 print("在第%d轮中，各中继设备的状态信息" % round)
                 for i in range(0,20):
                         print(UES[i].F_BS,UES[i].F_UE,UES[i].N1,'gain',UES[i].gains,'power',UES[i].Power)
                 break
-
-
-                #不采用多轮时隙的方法
-                # for j in range(0,20):
-                #     if j != dev_num:
-                #         top1 = int(100-100*queue[j].link_e)
-                #         key1 = random.randint(1,100)
-                #         "中继设备随机接收信息或者能量,在基站广播的时候" 
-                #         if key1 in range(1,top1):
-                #             pass
-                #             # info("DU%d infomation\n"% j)
-                #             # t3 = threading.Thread(target = command,args = (UES[i].host,"python Receive.py %s %s 0.1"%(UES[j].ip,UES[j].port)))
-                #         else:
-                #             # info("DU%d energy\n"% j)
-                #             egy = energy(UES[j].host, AP, 0.011)
-                #             UES[j].Power += egy 
-                #             # t3 = threading.Thread(target = energy,args = (UES[j].host,AP,1))                            
-                #     #被选中的中继设备将传输满足博弈均衡的有效信息量给请求的客户端设备
-                #     #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
-                #     "选中的中继设备通过中继减少能量，增加收益"
-
-                #     queue[num].Power -= queue[num].N1*0.00004
-                #     queue[num].gains += queue[num].F_UE
-                # print("在第%d轮中，各中继设备的状态信息" % round)
-                # for i in range(0,20):
-                #         print(UES[i].F_BS,UES[i].F_UE,UES[i].N1,'gain',UES[i].gains,'power',UES[i].Power)
-                # break
             num += 1
         #如果所有中继设备能量都不够，则基站自己传输
         if num == 21:

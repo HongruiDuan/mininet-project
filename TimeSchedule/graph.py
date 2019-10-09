@@ -4,6 +4,10 @@ from mn_wifi.link import wmediumd, _4address
 from mn_wifi.cli import CLI_wifi
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+
+from EH.energy import energy
+from Params.params import getDistance
+
 def topology():
     "Create a network."
     net = Mininet_wifi(controller=Controller, link=wmediumd,
@@ -16,8 +20,8 @@ def topology():
                              channel="1", position='40,60,0')
 
     "h6 is askinng for datas while h1,h2,h3 are the UE "
-
-    h1 = net.addHost('h1', ip="10.0.0.1", position='30,10,0')
+    h1 = net.addStation('h1', position='5,10,0', ip='10.0.0.1', mac='00:00:00:00:00:EE')
+    # h1 = net.addHost('h1', ip="10.0.0.1", position='30,10,0')
     h2 = net.addHost('h2', ip="10.0.0.2", position='20,20,0')
     h3 = net.addHost('h3', ip="10.0.0.3", position='30,20,0')
     h4 = net.addHost('h4', ip="10.0.0.4", position='40,20,0')
@@ -41,6 +45,11 @@ def topology():
     net.addLink(h6, ap1)
     net.addLink(BS, ap1)
     net.plotGraph(max_x=100, max_y=100)
+
+    # ap1.setTxPower('ap1-wlan0',10)
+
+    # print(ap1.params['txpower'][0])
+    energy(h1,ap1,0.0011)
 
     info("*** Starting network\n")
     net.build()

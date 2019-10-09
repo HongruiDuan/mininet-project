@@ -80,3 +80,6 @@
 [{"UEIP": "10.0.0.1", "UEPOWER": 44, "Integrity": 1.0, "UEPRICE": 45, "UEMAX": 60}]
 [{"UEIP": "10.0.0.2", "UEPOWER": 25.012163013369356, "Integrity": 0.9473684210526315, "UEPRICE": 35, "UEMAX": 55}]
 [{"UEIP": "10.0.0.3", "UEPOWER": 55, "Integrity": 0.7, "UEPRICE": 35, "UEMAX": 55}]
+[{"UEIP": "10.0.0.1", "UEPOWER": 29, "Integrity": 1.0, "UEPRICE": 45, "UEMAX": 60}]
+[{"UEIP": "10.0.0.2", "UEPOWER": 25.01825952101818, "Integrity": 0.9473684210526315, "UEPRICE": 35, "UEMAX": 55}]
+[{"UEIP": "10.0.0.3", "UEPOWER": 55, "Integrity": 0.7, "UEPRICE": 35, "UEMAX": 55}]

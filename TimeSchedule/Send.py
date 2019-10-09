@@ -23,6 +23,7 @@ def stringToList(s):
 为了适应时间线的功能现在每次发送一个编码之后的数据包
 '''
 def send(src, iface, dst, distance, pow, gain, index,send_pkt=[]):
+    pow = 0.004
     time.sleep(1)
     if distance <= 4:
         loss = 0
