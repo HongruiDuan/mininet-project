@@ -251,7 +251,7 @@ if __name__=='__main__':
                         break
                 if (len(new_solution) == pop_size):
                     break
-            solution = [solution2[i] for i in new_solution] 
+            solution = [solution2[i] for i in new_solution] # 最中求解出来的solution
             gen_no = gen_no + 1
         #图示显示每一轮的帕累托前沿面
         fairness = [i  for i in fairness_values]

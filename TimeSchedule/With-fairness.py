@@ -16,6 +16,7 @@ import json
 import random
 from NewGame import game
 from fairness import Fairness
+from RankByNSGA import RankByNSGA
 
 "线程函数"
 def command(host, arg):
@@ -46,7 +47,7 @@ class UE:
         self.ip = ip
         self.port = port
         self.link_e = link_e
-        self.Power = random.uniform(0.0001, 0.001)
+        self.Power = random.uniform(0.001, 0.002)
         self.gains = 0
         UE.count += 1
 def topology():
@@ -105,9 +106,17 @@ def topology():
         #根据设备能够达到的基站的效益对所有中继设备进行排序
         queue = sorted(UES, key = lambda UE: UE.F_BS, reverse=True)
 
+        #根据多目标优化方法对中继设备计算rank值
+        '''
+        得到rank值之后，相同的rank值之间选择U_BS较大的解还是
+        '''
+        queue = RankByNSGA(UES)
+
+
+
         #打印中继设备的信息
-        for i in range(0,20):
-            print(queue[i].F_BS,queue[i].F_UE, queue[i].N1,queue[i].gains,queue[i].Power)
+        # for i in range(0,20):
+        #     print(queue[i].rank,queue[i].F_BS,queue[i].F_UE, queue[i].N1,queue[i].gains,queue[i].Power)
         
         #开始发送信息
         num = 0
@@ -142,6 +151,7 @@ def topology():
                                 pass
                                 # info("DU%d infomation\n"% j)
                             else:
+                                pass
                                 # info("DU%d energy\n"% j)
                                 egy = energy(UES[j].host, AP, 0.011/TotalTime)
                                 UES[j].Power += egy 
@@ -152,17 +162,21 @@ def topology():
                 "选中的中继设备通过中继减少能量，增加收益"
                 queue[num].Power -= queue[num].N1*0.00004
                 queue[num].gains += queue[num].F_UE
+
                 print("在第%d轮中，各中继设备的状态信息" % round)
                 for i in range(0,20):
-                        print(UES[i].F_BS,UES[i].F_UE,UES[i].N1,'gain',UES[i].gains,'power',UES[i].Power)
+                        print(UES[i].rank,UES[i].F_BS,UES[i].F_UE,UES[i].N1,UES[i].gains,UES[i].Power)
                 break
+
             num += 1
         #如果所有中继设备能量都不够，则基站自己传输
         if num == 21:
             pass    
         #计算当前轮的fairness指数
         fair_result.append(Fairness(UES))
+        
         round += 1
+
     info("*** Fairness")
     print(fair_result)
     info("*** Running CLI\n")
