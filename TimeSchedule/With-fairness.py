@@ -14,6 +14,7 @@ import threading
 import time
 import json
 import random
+import matplotlib.pyplot as plt
 from NewGame import game
 from fairness import Fairness
 from RankByNSGA import Rank
@@ -49,6 +50,8 @@ class UE:
         self.link_e = link_e
         self.Power = random.uniform(0.003, 0.005)
         self.gains = 0
+        self.rank = 0
+        self.powhis = [self.Power]
         UE.count += 1
 def topology():
     #创建网络和设备初始化
@@ -110,7 +113,7 @@ def topology():
         '''
         在进行NSGA——II求解之前先判断能量是否足够传输,满足能量需求的中继设备才是候选解集
         '''
-        len_que = len(queue)
+        len_que = len(queue)-1
         for i in range(0,len_que):
             if (queue[i].N1*0.00004) > queue[i].Power:
                 del queue[i]
@@ -129,7 +132,7 @@ def topology():
             TotalTime = 10 #时间片大小
             # FileIndex = 0 #发送文件位置
             dst = []
-            for i in range(0,20):
+            for i in range(0,len(queue)):
                 dst.append(queue[i].ip)
             #随机一个中继设备为RU
             dev_num = random.randint(0,20)
@@ -141,9 +144,9 @@ def topology():
                 # t2 = threading.Thread(target=command, args = (queue[dev_num].host,"python Receive.py %s %s 0.5"%(queue[dev_num].ip,queue[dev_num].port)))                    
                 #其他的中继设备按照自身的丢包率来进行能量和信息收集
                 "先采用的是直接数值模拟，并没有进行实际的发送和接收包"
-                for j in range(0,20):
+                for j in range(0,len(UES)-1):
                     if j != dev_num:
-                        top1 = int(100-100*queue[j].link_e)
+                        top1 = int(100-100*UES[j].link_e)
                         key1 = random.randint(1,1000)
                         "中继设备随机接收信息或者能量"
                         if key1 in range(1,top1):
@@ -154,11 +157,13 @@ def topology():
                             # info("DU%d energy\n"% j)
                             egy = energy(UES[j].host, AP, 0.011/TotalTime)
                             UES[j].Power += egy 
+                            UES[j].powhis.append(egy)
                                                    
             #被选中的中继设备将传输满足博弈均衡的有效信息量给请求的客户端设备
             #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
             "选中的中继设备通过中继减少能量，增加收益"
             queue[num].Power -= queue[num].N1*0.00004
+            queue[num].powhis.append(queue[num].Power)
             queue[num].gains += queue[num].F_UE
 
             print("在第%d轮中，各中继设备的状态信息" % round)
@@ -173,6 +178,17 @@ def topology():
         fair_result.append(Fairness(UES))
         
         round += 1
+    plt.xlabel('round',fontsize = 15)
+    plt.xlim(0,50)
+    # plt.ylim(0,1)
+    plt.ylabel('Power',fontsize = 15)
+    for i in range(0,len(UES)-1):
+        print("the power history of %d-th is"% i, UES[i].powhis)
+        round_x = [i for i in range(0,len(UES[i].powhis))]
+        round_his = UES[i].powhis
+        plt.plot(round_x,round_his,label='%d-th'%i)
+    plt.legend()
+    plt.show()
 
     info("*** Fairness")
     print(fair_result)

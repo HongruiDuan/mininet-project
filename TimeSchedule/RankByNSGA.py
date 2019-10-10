@@ -149,9 +149,17 @@ def crowding_distance(values1, values2, front):
     distance[len(front) - 1] = 4444444444444444
     #距离计算公式，换种定义
     for k in range(1,len(front)-1):
-        distance[k] = distance[k]+ (values1[sorted1[k+1]] - values1[sorted1[k-1]])/(max(values1)-min(values1)) #统一标准化
+        if max(values1) == min(values1):
+            maxdis = 1
+        else:
+            maxdis = max(values1)-min(values1)
+        distance[k] = distance[k]+ (values1[sorted1[k+1]] - values1[sorted1[k-1]])/maxdis #统一标准化
     for k in range(1,len(front)-1):
-        distance[k] = distance[k]+ (values2[sorted2[k+1]] - values2[sorted2[k-1]])/(max(values2)-min(values2))
+        if max(values2) == min(values2):
+            maxdis = 1
+        else:
+            maxdis = max(values2)-min(values2)
+        distance[k] = distance[k]+ (values2[sorted2[k+1]] - values2[sorted2[k-1]])/maxdis
     return distance
 
 #交叉
@@ -166,8 +174,12 @@ def crossover(a,b):
 def mutation(solution):
     global max_x
     mutation_prob = random.random()
+    if max_x == min_x:
+        maxdis = 1
+    else:
+        maxdis = max_x-min_x
     if mutation_prob <1:
-        solution = min_x+(max_x-min_x)*random.random()
+        solution = min_x+maxdis*random.random()
     return solution
 
 '''
@@ -210,11 +222,11 @@ def Rank(UES,queue):
         fairness_values = [Fairness(UES,queue,solution[i])for i in range(0,pop_size)]
         utility_values = [Utility(queue,solution[i])for i in range(0,pop_size)]
         
-        print(fairness_values)
+        # print(fairness_values)
     
-        print(utility_values)
+        # print(utility_values)
         non_dominated_sorted_solution = fast_non_dominated_sort(utility_values[:],fairness_values[:])#快速非支配排序返回的front的集合
-        print("第",gen_no, "次繁衍的帕累托最优的设备编号为")
+        # print("第",gen_no, "次繁衍的帕累托最优的设备编号为")
             
         # for valuez in non_dominated_sorted_solution[0]:
             # print(round(solution[valuez],3),end=" ")
