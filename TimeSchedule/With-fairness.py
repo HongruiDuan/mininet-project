@@ -48,7 +48,7 @@ class UE:
         self.ip = ip
         self.port = port
         self.link_e = link_e
-        self.Power = random.uniform(0.003, 0.005)
+        self.Power = random.uniform(0.0015, 0.002)
         self.gains = 0
         self.rank = 0
         self.powhis = [self.Power]
@@ -93,8 +93,8 @@ def topology():
     c0.start()
     ap1.start([c0])
     #设备初始化完毕，开始进行调度
-    "总共进行50轮数据传输"
-    Total_r = 50
+    "总共进行20轮数据传输"
+    Total_r = 20
     round = 0
     fair_result = []
     while round<Total_r:
@@ -114,10 +114,13 @@ def topology():
         在进行NSGA——II求解之前先判断能量是否足够传输,满足能量需求的中继设备才是候选解集
         '''
         len_que = len(queue)-1
-        for i in range(0,len_que):
-            if (queue[i].N1*0.00004) > queue[i].Power:
-                del queue[i]
+        l = 0
+        while l<len_que:
+        # for l in range(0,len_que): #for循环是否在判断时就已经
+            if (queue[l].N1*0.00004) > queue[l].Power:
+                del queue[l]
                 len_que-=1
+            l += 1
 
         num = Rank(UES,queue)
         #打印中继设备的信息
@@ -129,7 +132,7 @@ def topology():
         
         if (queue[num].N1*0.00004) < queue[num].Power:
             print('the %d-th device has been selected' % num)
-            TotalTime = 10 #时间片大小
+            TotalTime = 20 #时间片大小
             # FileIndex = 0 #发送文件位置
             dst = []
             for i in range(0,len(queue)):
@@ -144,7 +147,7 @@ def topology():
                 # t2 = threading.Thread(target=command, args = (queue[dev_num].host,"python Receive.py %s %s 0.5"%(queue[dev_num].ip,queue[dev_num].port)))                    
                 #其他的中继设备按照自身的丢包率来进行能量和信息收集
                 "先采用的是直接数值模拟，并没有进行实际的发送和接收包"
-                for j in range(0,len(UES)-1):
+                for j in range(0,len(UES)):
                     if j != dev_num:
                         top1 = int(100-100*UES[j].link_e)
                         key1 = random.randint(1,1000)
@@ -156,8 +159,8 @@ def topology():
                             pass
                             # info("DU%d energy\n"% j)
                             egy = energy(UES[j].host, AP, 0.011/TotalTime)
-                            UES[j].Power += egy 
-                            UES[j].powhis.append(egy)
+                            UES[j].Power += egy #第j个设备收集能量
+                            # UES[j].powhis.append(egy)
                                                    
             #被选中的中继设备将传输满足博弈均衡的有效信息量给请求的客户端设备
             #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
@@ -166,10 +169,10 @@ def topology():
             
             queue[num].gains += queue[num].F_UE
 
-            print("在第%d轮中，各中继设备的状态信息" % round)
-            for i in range(0,20):
-                    UES[num].powhis.append(UES[num].Power)#不管是否发送都要增加记录
-                    print(UES[i].rank,UES[i].F_BS,UES[i].F_UE,UES[i].N1,UES[i].gains,UES[i].Power)
+        print("在第%d轮中，各中继设备的状态信息" % round)
+        for k in range(0,20):
+            UES[k].powhis.append(UES[k].Power)#不管是否发送都要增加记录
+            print(UES[k].rank,UES[k].F_BS,UES[k].F_UE,UES[k].N1,UES[k].gains,UES[k].Power)
 
             
         #如果所有中继设备能量都不够，则基站自己传输
@@ -179,17 +182,31 @@ def topology():
         fair_result.append(Fairness(UES))
         
         round += 1
-    plt.xlabel('round',fontsize = 15)
-    plt.xlim(0,50)
+
+    plt.xlabel('round',fontsize = 10)
+    plt.ylabel('Power(J)',fontsize = 10)
+    # plt.xlim(0,50)
     # plt.ylim(0,1)
-    plt.ylabel('Power',fontsize = 15)
     print('len of UES:',len(UES))
-    for i in range(0,len(UES)):
+    # 输出所有设备的能量变化
+    for i in range(0,len(UES)):    
         print("the power history of %d-th is"% i, UES[i].powhis)
-        # round_x = [j for j in range(0,len(UES[j].powhis))]
-        round_x = list(range(len(UES[j].powhis))) 
-        round_his = UES[i].powhis
-        plt.plot(round_x,round_his,label='%d-th'%i)
+        data_x = [j for j in range(0,len(UES[i].powhis))]
+        # round_x = range(len(UES[j].powhis))
+        data_y = UES[i].powhis
+        labelx = range(0,21)
+        plt.xticks(data_x,labelx)
+        plt.plot(data_x,data_y,marker = '*',label='%d-th'%i)
+
+    # 挑选比较有代表性的
+    # for i in range(0,len(UES)):
+    #     if i in [0,1,6.11,15,18,19]:
+    #         print("the power history of %d-th is"% i, UES[i].powhis)
+    #         data_x = [j for j in range(0,len(UES[i].powhis))]
+    #         # round_x = range(len(UES[j].powhis))
+    #         data_y = UES[i].powhis
+    #         plt.plot(data_x,data_y,marker = '*',label='%d-th'%i)
+    
     plt.legend()
     plt.show()
 
