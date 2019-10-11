@@ -163,11 +163,12 @@ def topology():
             #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
             "选中的中继设备通过中继减少能量，增加收益"
             queue[num].Power -= queue[num].N1*0.00004
-            queue[num].powhis.append(queue[num].Power)
+            
             queue[num].gains += queue[num].F_UE
 
             print("在第%d轮中，各中继设备的状态信息" % round)
             for i in range(0,20):
+                    UES[num].powhis.append(UES[num].Power)#不管是否发送都要增加记录
                     print(UES[i].rank,UES[i].F_BS,UES[i].F_UE,UES[i].N1,UES[i].gains,UES[i].Power)
 
             
@@ -182,9 +183,11 @@ def topology():
     plt.xlim(0,50)
     # plt.ylim(0,1)
     plt.ylabel('Power',fontsize = 15)
-    for i in range(0,len(UES)-1):
+    print('len of UES:',len(UES))
+    for i in range(0,len(UES)):
         print("the power history of %d-th is"% i, UES[i].powhis)
-        round_x = [i for i in range(0,len(UES[i].powhis))]
+        # round_x = [j for j in range(0,len(UES[j].powhis))]
+        round_x = list(range(len(UES[j].powhis))) 
         round_his = UES[i].powhis
         plt.plot(round_x,round_his,label='%d-th'%i)
     plt.legend()
