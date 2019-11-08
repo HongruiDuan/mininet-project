@@ -31,6 +31,7 @@ def energy(sta, ap, time):
     while t <= time:
         h = random.normal(0, 1)
         receivePower = transmitPower * (distance ** (-alpha)) * (h ** 2)
+        print('receive power',receivePower)
         receiveEnergy += receivePower * interval
         t += interval
     # info('after %fs receive energy : %fJ\n' % (time, receiveEnergy))
