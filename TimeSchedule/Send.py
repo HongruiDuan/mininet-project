@@ -22,15 +22,16 @@ def stringToList(s):
 ''' 
 为了适应时间线的功能现在每次发送一个编码之后的数据包
 '''
-def send(src, iface, dst, distance, pow, gain, index,send_pkt=[]):
+def send(src, iface, dst, loss, pow=0.004, gain=10, index=1,send_pkt=[]):
     pow = 0.004
     time.sleep(1)
-    if distance <= 4:
-        loss = 0
-    elif distance <=10:
-        loss = 0.1
-    else:
-        loss = 0.4
+    # if distance <= 4:
+    #     loss = 0
+    # elif distance <=10:
+    #     loss = 0.1
+    # else:
+    #     loss = 0.4
+    loss = float(loss)
     index = int(index) #确定每次传输的index
     filename1 = '/home/shlled/mininet-project-duan/TimeSchedule/Log/msg.txt'
     f1=open(filename1,'r')

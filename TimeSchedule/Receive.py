@@ -25,7 +25,8 @@ class action:
         key = tuple([packet[0][1].src, packet[0][1].dst])
         if packet[0][1].dst == self.ip:  
             #将数据写入到缓存文件中
-            filename = '/home/shlled/mininet-project-duan/TimeSchedule/Log/%s.txt' % packet[0][1].dst[7:8]
+            filename = '/home/shlled/mininet-project-duan/TimeSchedule/Log/RU.txt'
+            # filename = '/home/shlled/mininet-project-duan/TimeSchedule/Log/%s.txt' % packet[0][1].dst[7:8]
             f1 = open(filename, "a+")
             packet_queue.append(packet[0][3].load)
             self.rc_pkt.append(packet[0][3].load)
