@@ -5,6 +5,8 @@ from mn_wifi.link import wmediumd, adhoc
 from mn_wifi.cli import CLI_wifi
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+
+
 from EH.newenergy import energy
 from Params.params import getDistance
 import numpy as np
@@ -17,15 +19,14 @@ import random
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.rcParams.update({'font.size': 10}) # 改变所有字体大小，改变其他性质类似
-from NewGame import game
-from fairness import Fairness
-from RankByNSGA import Rank
+from API.fairness import Fairness
+from API.RankByNSGA import Rank
+from API.NewGame import game
 from EH.LossRate import LossRate_FDS_RU
+from API.nTableGame import CRG
+from API.DrawPow import drawPowAndGain
 
 
-"香农公式，根据带宽和信噪比计算理论最大速率"
-def rate():
-    pass
 "线程函数"
 def command(host, arg):
     result = host.cmd(arg)
@@ -63,8 +64,12 @@ class UE:
         self.rank = 0
         self.relay = False
         self.powhis = [self.Power]
+        self.gainhis = [self.gains]
         UE.count += 1
-def topology():
+
+  
+
+def topology(DeviceNum,Total_r):
     #创建网络和设备初始化
     net = Mininet_wifi(controller=Controller, link=wmediumd,
                        wmediumd_mode=interference)
@@ -74,18 +79,19 @@ def topology():
 
 
     UES = []
-    for i in range(1, 21):
+    for i in range(0, DeviceNum):
+        temp=i+1
         # 创建中继设备节点
-        temphost = net.addStation('DU%d' % i, position='%d,%d,0' % (random.randint(3, 45), random.randint(3, 45)),
-                                  ip='10.0.0.%d' % i, mac='00:00:00:00:00:%02d' % i)
+        temphost = net.addStation('DU%d' % temp, position='%d,%d,0' % (random.randint(3, 45), random.randint(3, 45)),
+                                  ip='10.0.0.%d' % temp, mac='00:00:00:00:00:%02d' % temp)
         # 创建中继设备类对象
         # temp = UE(temphost,'UE%d'%i,'10.0.0.%d'%i, 'DU%d-wlan0' %i,0.05+0.03*i,i) #丢包率已经初始化完毕
         # 根据位置确定丢包率
-        temp = UE(temphost, 'UE%d' % i, '10.0.0.%d' % i, 'DU%d-wlan0' % i, LossRate_FDS_RU(temphost, RU), i)
+        temp = UE(temphost, 'DU%d' % temp, '10.0.0.%d' % temp, 'DU%d-wlan0' % temp, LossRate_FDS_RU(temphost, RU), temp)
         UES.append(temp)
     
     #打印出设备池中的设备信息
-    for i in range(0,20):
+    for i in range(0,DeviceNum):
         print UES[i].name,UES[i].ip,UES[i].port,UES[i].Power
     
 
@@ -96,7 +102,7 @@ def topology():
 
     info("*** Configuring wifi nodes\n")
     net.configureWifiNodes()
-    net.plotGraph(max_x=50, max_y=50)
+    
 
     info("*** Adding Link\n")
     net.addLink(AP, cls=adhoc, ssid='adhocNet', mode='g', channel=5, ht_cap='HT40+')
@@ -110,55 +116,71 @@ def topology():
     
     #设备初始化完毕，开始进行调度
     
-    Total_r = 1
     round = 0
-
+    fair_result=[]
     while round<Total_r:
+        #显示当前的设备分布
+        locate=net.plotGraph(max_x=50, max_y=50)
+
         #根据设备的丢包率来计算博弈结果，写入中继设备
         total_e=0
-        for i in range(0,20):
+        for i in range(0,DeviceNum):
             total_e += UES[i].link_e
         result = game(1-total_e/20)
-        for i in range(0,20):
+        for i in range(0,DeviceNum):
             UES[i].F_BS = result[2]
             UES[i].F_UE = result[3]
             UES[i].N1 = result[0]
             UES[i].b = result[1]
         print 'result:',UES[i].F_UE,UES[0].N1,UES[0].b
-        #根据设备能够达到的基站的效益对所有中继设备进行排序
+        #根据设备丢包率将UES,排成队列
         queue = sorted(UES, key = lambda UE: UE.link_e, reverse=True)
         queue_num=[]
-        for i in range(0,20):
+        for i in range(0,DeviceNum):
             queue_num.append(queue[i].num)
         print "queue:",queue_num
         #根据哪个提升通信速率比较大来决定是否进行中继
         '''
         总共的频谱大小为20Mhz,RU购买15Mhz 剩余5Mhz
-
         '''
-        relay_num = 0
-        norelay_num = 0
-        band_price = 10
-        #中继的餐桌大小为 
-        desk_relay = UES[0].F_UE/band_price + 15*6/25
-        desk_norelay = 5
-        for i in range(0,20):
-            if((desk_relay/(relay_num+1))>(desk_norelay/(norelay_num+1))):
-                queue[i].relay = True
-                relay_num += 1 
-            else:
-                norelay_num += 1
-        num_relay = []
-        num_norelay = []
-        for i in range(0,20):
-            if(queue[i].relay == True):
-                num_relay.append(queue[i].num)
-            else:
-                num_norelay.append(queue[i].num)
-        print "relay:",num_relay
-        print "no_relay:",num_norelay
+        #进餐人数
+        cus_number=[]
+        for i in range(0,DeviceNum):
+            cus_number.append(UES[i].num)
         
-        for i in range(0,20):
+        #各餐桌大小
+        band_price = 10 #每单位频谱的售价
+        desk_relay = UES[0].F_UE/band_price + 15*6/25
+        desk_norelay = 8
+        table_size=[desk_relay,desk_norelay]
+        g=[[],[]]
+        #调用CRG求得各个餐桌上分组情况
+        CRG_result=CRG(table_size,g,cus_number)
+
+        print "CRG_result",CRG_result
+        for i in range(0,DeviceNum):
+            if (UES[i].num in CRG_result[0]):
+                UES[i].relay=True
+
+        #AP广播期间，中继收集信息收集能量，不做中继的收集能量
+        TotalTime=10#基站广播时间10ms
+        for i in range(0,TotalTime):                    
+            for j in range(0,len(UES)):
+                if UES[j].relay==True:
+                    top1 = int(100-100*UES[j].link_e)
+                    key1 = random.randint(1,100)
+                    "中继设备随机接收信息或者能量"
+                    if key1 in range(1,top1):
+                        pass
+                    else:      
+                        egy = energy(UES[j].host, AP, 0.03125/TotalTime)
+                        UES[j].Power += egy #第j个设备收集能量
+                else:
+                    #不参与中继的设备每个时隙都在进行能量收集
+                    egy = energy(UES[j].host, AP, 0.03125/TotalTime)
+                    UES[j].Power += egy #第j个设备收集能量
+        #中继传输信息阶段
+        for i in range(0,DeviceNum):
             #成为中继依次给RU发送信息
             if(queue[i].relay == True):
                 info("FD %d start sending  " % queue[i].num) 
@@ -171,51 +193,27 @@ def topology():
                 t1.join()
                 t2.join()
                 info("FD %d end\n" % queue[i].num)
+                queue[i].Power -= (queue[i].N1*0.00004)/len(CRG_result[0])
+                queue[i].gains += queue[i].F_UE/len(CRG_result[0])
+            else:
+                #不参与中继的设备继续进行能量收集
+                egy = energy(UES[i].host, AP, 0.03125/TotalTime)
+                UES[i].Power += egy #第j个设备收集能量
 
+        for k in range(0,DeviceNum):
+            UES[k].powhis.append(UES[k].Power)#不管是否发送都要增加记录
+            UES[k].gainhis.append(UES[k].gains)
 
-                
-        #开始发送信息 
-        # if (queue[num].N1*0.00004) < queue[num].Power:
-        #     print('the %d-th device has been selected' % queue[num].num)
-        #     TotalTime = 20 #时间片大小
-        #     # FileIndex = 0 #发送文件位置
-        #     dst = []
-        #     for i in range(0,len(queue)):
-        #         dst.append(queue[i].ip)
-        #     #随机一个中继设备为RU
-        #     # dev_num = random.randint(0,20)
-        #     #先不采用广播的方法
-        #     for i in range(0,TotalTime):  #有100个最小时隙，AP广播100轮，DU选择接收能量和信息，RU直接接收信息  
-        #         "此处AP应该改成广播，APsend 的 dst应该不止一个"                  
-        #         # t1 = threading.Thread(target=command, args = (AP,"python APBroadCast.py 10.1.0.1 AP-wlan0 '%s' %s" %(dst,FileIndex)))#AP广播一个数据包                    
-        #         #一个随机设备请求信息，因此其只接收信息                    
-        #         # t2 = threading.Thread(target=command, args = (queue[dev_num].host,"python Receive.py %s %s 0.5"%(queue[dev_num].ip,queue[dev_num].port)))                    
-        #         #其他的中继设备按照自身的丢包率来进行能量和信息收集
-        #         "先采用的是直接数值模拟，并没有进行实际的发送和接收包"
-        #         for j in range(0,len(UES)):
-        #             if (j+1) == queue[num].num:
-        #                 top1 = int(100-100*UES[j].link_e)
-        #                 key1 = random.randint(1,100)
-        #                 "中继设备随机接收信息或者能量"
-        #                 if key1 in range(1,top1):
-        #                     pass
-        #                 else:      
-        #                     egy = energy(UES[j].host, AP, 0.03125/TotalTime)
-        #                     UES[j].Power += egy #第j个设备收集能量
-        #                 # UES[j].powhis.append(egy)
-        #             else:
-        #                 egy = energy(UES[j].host, AP, 0.03125/TotalTime)
-        #                 UES[j].Power += egy #第j个设备收集能量
-                                                   
-        #     #被选中的中继设备将传输满足博弈均衡的有效信息量给请求的客户端设备
-        #     #中继设备的发射功率为4mw，一个数据包为1k，中继设备的发射速率为100k/s
-        #     "选中的中继设备通过中继减少能量，增加收益"
-        #     print('the %d-th device has been selected, power from %f to %f' % (queue[num].num,queue[num].Power,queue[num].Power-queue[num].N1*0.00004))
-        #     queue[num].Power -= queue[num].N1*0.00004 
-        #     queue[num].gains += queue[num].F_UE
-
+        fair_result.append(Fairness(UES))
         round += 1
     
+    "绘制每个设备的能量和效用变化图像"
+    drawPowAndGain(UES,Total_r)
+
+
+    info("*** Fairness")
+    print(fair_result)
+
     info("*** Running CLI\n")
     CLI_wifi(net)
 
@@ -224,6 +222,9 @@ def topology():
 
 if __name__ == '__main__':
     setLogLevel('info')
-    topology()
+     #"创建网络拓扑，定义网络参数"
+    DeviceNum=5  #FD总数量
+    Total_r=2  #进行轮数  
+    topology(DeviceNum,Total_r)
 
 

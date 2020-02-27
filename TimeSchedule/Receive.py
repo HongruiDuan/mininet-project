@@ -48,7 +48,7 @@ class action:
 def receive(ip, iface, loss,filter="icmp", rc_pkt=[]):
     global Tloss
     Tloss = loss
-    sniff(iface=iface, filter="icmp", timeout=10, prn=action(ip, rc_pkt).custom_action)
+    sniff(iface=iface, filter="icmp", timeout=3, prn=action(ip, rc_pkt).custom_action)
     #在sniff之后可以查看哪些编码包序号的被接收到了
 
 def packetQueue():
