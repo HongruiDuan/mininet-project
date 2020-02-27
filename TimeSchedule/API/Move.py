@@ -12,9 +12,39 @@
     返回新的坐标 [x,y]
     注意计算结果为小数，最后的返回值要求为int型
 '''
-#单功能函数实现
-def move():
+from math import sin, cos, radians
 
+#单功能函数实现
+def move(locate,speed,direct):
+    # 设备二位移动
+    if direct > 360:
+        while direct > 360:
+            direct = direct - 360
+    elif direct < 0:
+        while direct < 0:
+            direct = direct + 360
+    angel = radians(direct)
+    x = locate[0]
+    y = locate[1]
+    #  第一象限
+    if 0.0 <= angel <= 90.0:
+        x = x + speed * cos(angel)
+        y = y + speed * sin(angel)
+    #  第二象限
+    if 90.0 < angel <= 180.0:
+        x = x - speed * cos(angel)
+        y = y + speed * sin(angel)
+    #  第三象限
+    if 180.0 < angel <= 270.0:
+        x = x - speed * cos(angel)
+        y = y - speed * sin(angel)
+    #  第四象限
+    if 270.0 < angel <= 360.0:
+        x = x - speed * cos(angel)
+        y = y + speed * sin(angel)
+    x = int(x)
+    y = int(y)
+    return [x, y]
 
     return [x,y]
 
@@ -23,7 +53,7 @@ def move():
 if __name__=='__main__':
     locate=[0,0]
     speed=10
-    direct=135
+    direct=180
     res=move(locate,speed,direct)
     print res
 

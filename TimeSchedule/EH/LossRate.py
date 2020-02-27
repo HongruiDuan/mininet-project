@@ -25,6 +25,6 @@ def LossRate_FDS_RU(FD, RU):
     # print("比特误码率", (1 - BSR))
     PLR = 1 - BSR ** 1024
     # print("丢包率", PLR * 100)
-    info("distance : %f, bit error rate: %3f, packet loss rate: %3f \n" % (distance, 1 - BSR, PLR))
+    # info("distance : %f, bit error rate: %3f, packet loss rate: %3f \n" % (distance, 1 - BSR, PLR))
     # print("distance", distance, " ,bit error rate: ", (1 - BSR), " ,packet loss rate:", PLR * 100, "%")
     return PLR

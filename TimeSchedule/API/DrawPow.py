@@ -14,7 +14,7 @@ def drawPowAndGain(UES,round):
     #按照时间创建图片目录
     #path='../Figures/'+str(datetime.date.today())
     path='Figures/'+str(datetime.date.today()) #在net.py中调用是相对于net.py的目录
-    os.mkdir(path)
+    # os.mkdir(path) 只mk 一次在net中mk
     #对每一个设备的能量和效用绘制图像
     for i in range(0,len(UES)):   
         fig = plt.figure()
@@ -41,6 +41,7 @@ def drawPowAndGain(UES,round):
         plt.legend() #给图像加上图例
         plt.tight_layout() #解决重叠问题
         fig.savefig("%s/%d-th device.png"%(path,UES[i].num)) #保存图片
+        plt.close()
 
 
 if __name__=='__main__':
