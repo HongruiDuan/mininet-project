@@ -24,17 +24,17 @@ def drawPowAndGain(UES,round):
         plt.ylabel('Power(J) of %d-th FD'%UES[i].num) 
         data_x = [j for j in range(0,len(UES[i].powhis))]
         data_pow = UES[i].powhis
-        labelx = range(0,round)
+        labelx = range(0,round+1)
         plt.xticks(data_x,labelx,fontsize=14)
         plt.plot(data_x,data_pow,marker = '*',label='%d-th pow'%UES[i].num)
-        
+        plt.legend() #给图像加上图例
         #绘制效用变化图
         plt.subplot(212)
         plt.xlabel('round')
         plt.ylabel('Gain of %d-th FD'%UES[i].num) 
         data_x = [j for j in range(0,len(UES[i].gainhis))]
         data_gain = UES[i].gainhis
-        labelx = range(0,round)
+        labelx = range(0,round+1)
         plt.xticks(data_x,labelx,fontsize=14)
         plt.plot(data_x,data_gain,marker = '^',label='%d-th gain'%UES[i].num)
 

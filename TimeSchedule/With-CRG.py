@@ -30,28 +30,8 @@ from API.nTableGame import CRG
 from API.DrawPow import drawPowAndGain
 from API.Move import move
 from API.DrawLocate import drawLocate
+from FogCell import fogcell
 
-"线程函数"
-def command(host, arg):
-    result = host.cmd(arg)
-    return result
-"线程类"
-class MyThread(threading.Thread):
-
-    def __init__(self, func, args=()):
-        super(MyThread, self).__init__()
-        self.func = func
-        self.args = args
-
-    def run(self):
-        self.result = self.func(*self.args)
-
-    def get_result(self):
-        try:
-            return self.result
-        except Exception:
-            return None
-#设备类，存储设备的信息
 random.seed(2)
 
 class UE:
@@ -88,37 +68,25 @@ def topology(DeviceNum,RUnum,Total_r):
     RU=[]
     for i in range(0,RUnum):
         t=i+1
-        temphost = net.addStation('RU%d'% t, position='%d,%d,0' % (random.randint(20, 30), random.randint(20, 30)), 
+        temphost = net.addStation('RU%d'% t, position='%d,%d,0' % (random.randint(0, 25), random.randint(0, 25)), 
                                     ip='10.2.0.%d' % t,mac='00:00:00:00:0E:%02d'%t)
         #对于每一个设备遍历在其D2D通信范围内的RU,寻求一个丢包率最小的RU的Fogcell加入
-        temp=UE(temphost, 'RU%d' % t, '10.0.0.%d' % t, 'RU%d-wlan0' % t, 0.0, t, -1)
+        temp=UE(temphost, 'RU%d' % t, '10.0.0.%d' % t, 'RU%d-wlan0' % t, 0.0, t, -1)#初始化的时候参数先不管
         RU.append(temp)
-        # RU2 = net.addStation('RU2', position='25,15,0', ip='10.1.0.3',mac='00:00:00:00:00:DF')
     #创建FD
     UES = []
     for i in range(0, DeviceNum):
         t=i+1
         # 创建中继设备节点
-        temphost = net.addStation('DU%d' % t, position='%d,%d,0' % (random.randint(10, 40), random.randint(10, 40)),
+        temphost = net.addStation('DU%d' % t, position='%d,%d,0' % (random.randint(5, 45), random.randint(5, 45)),
                                   ip='10.0.0.%d' % t, mac='00:00:00:00:00:%02d' % t)
-        
-        # 根据位置确定到达哪个RU的丢包率比较小，加入其cell
-        min=1 #选择一个丢包率最小的
-        index=0
-        for j in range(0,len(RU)):
-            t_loss=LossRate_FDS_RU(temphost, RU[j].host)
-            if t_loss<=min:
-                min=t_loss
-                index=j
-        print "in %d-th FD, %d-RU has been choosed,min loos:%d" %(t,index,t_loss)
-        temp = UE(temphost, 'DU%d' % t, '10.0.0.%d' % t, 'DU%d-wlan0' % t, 0.0, t, -1) #初始化的时候先不管
+        temp = UE(temphost, 'DU%d' % t, '10.0.0.%d' % t, 'DU%d-wlan0' % t, 0.0, t, -1) 
         UES.append(temp)
     
     #打印出设备池中的设备信息
     for i in range(0,RUnum):
         print RU[i].name,RU[i].locate
-    for i in range(0,DeviceNum):
-        print UES[i].name,UES[i].Power,UES[i].locate,"cellnum:",UES[i].cellnum
+    
     
 
     c0 = net.addController('c0')
@@ -156,111 +124,53 @@ def topology(DeviceNum,RUnum,Total_r):
     while round<Total_r:
         #显示当前的设备分布
         # net.plotGraph(max_x=50, max_y=50) #无返回值，不能保存，只能修改源码,同时写在此处调用无反应，只能自己实现绘制地理位置
-        # print "locate when start"
-        # for i in range(0,DeviceNum):
-        #     print UES[i].name,UES[i].host.params['position'][0],UES[i].host.params['position'][1]
         "自己实现绘制各个设备的地理位置图像，二维的"
         drawLocate(AP,RU,UES,round)
         "根据这一轮开始时设备的地理位置来计算最小的Fogcell加入"
+        Fog_cell=[]
+        for i in range(0,RUnum):
+            Fog_cell.append([])
         for i in range(0, DeviceNum):
-            t=i+1
-            # 根据位置确定到达哪个RU的丢包率比较小，加入其cell
-            min=1 #选择一个丢包率最小的
-            index=0
-            for j in range(0,len(RU)):
-                t_loss=LossRate_FDS_RU(temphost, RU[j].host)
-                if t_loss<=min:
-                    min=t_loss
-                    index=j
-            print "in %d-th FD, %d-RU has been choosed,min loos:%d" %(t,index,t_loss)
-            UES[i].link_e=t_loss
-            UES[i].cellnum=index
-        "根据设备的丢包率来计算博弈结果，写入中继设备"
-        total_e=0
-        for i in range(0,DeviceNum):
-            total_e += UES[i].link_e
-        result = game(1-total_e/20)
-        for i in range(0,DeviceNum):
-            UES[i].F_BS = result[2]
-            UES[i].F_UE = result[3]
-            UES[i].N1 = result[0]
-            UES[i].b = result[1]
-        print 'result:',UES[i].F_UE,UES[0].N1,UES[0].b
-        "根据设备丢包率将UES,排成队列"
-        queue = sorted(UES, key = lambda UE: UE.link_e, reverse=True)
-        queue_num=[]
-        for i in range(0,DeviceNum):
-            queue_num.append(queue[i].num)
-        print "queue:",queue_num
+            if(UES[i].online):  #只有在线的设备才选择加入Fogcell
+                t=i+1
+                # 根据位置确定到达哪个RU的丢包率比较小，加入其cell
+                min=1 #选择一个丢包率最小的
+                index=0
+                for j in range(0,len(RU)):
+                    t_loss=LossRate_FDS_RU(UES[i].host, RU[j].host)
+                    if t_loss<=min:
+                        min=t_loss
+                        index=j
+                print "in %d-th FD, %d-RU has been choosed,min loos:%f" %(t,index,t_loss)
+                UES[i].link_e=t_loss
+                #加入Fogcell
+                UES[i].cellnum=index
+                Fog_cell[index].append(UES[i])
 
-        '''
-        根据哪个提升通信速率比较大来决定是否进行中继,CRG问题
-        总共的频谱大小为20Mhz,RU购买15Mhz 剩余5Mhz
-        '''
-        #进餐人数
-        cus_number=[]
+        # print Fog_cell #打印出来的是各个__main__中各个UE实例的列表
+        "在每一次Fogcell开始之前，打印各个设备的信息"
+        print "Before FogCell"
         for i in range(0,DeviceNum):
-            if(UES[i].online):
-                cus_number.append(UES[i].num)
+            print UES[i].name,UES[i].locate,"power:",UES[i].Power,"cellnum:",UES[i].cellnum,"lossrate:",UES[i].link_e
+
+        "对于每一个Fogcell单独进行调用，多线程并行进行"
+        thrlist=[]
+        for i in range(0,RUnum):
+            t = threading.Thread(target=fogcell, args = (AP,Fog_cell[i],RU,i))
+            thrlist.append(t)
+            t.start()  #老是忘记
+        for t in thrlist:
+            t.join()
+        print "After FogCell"
+        for i in range(0,DeviceNum):
+            print UES[i].name,UES[i].locate,"power:",UES[i].Power,"cellnum:",UES[i].cellnum,"lossrate:",UES[i].link_e
         
-        #各餐桌大小
-        band_price = 10 #每单位频谱的售价
-        desk_relay = UES[0].F_UE/band_price + 15*6/25
-        desk_norelay = 8
-        table_size=[desk_relay,desk_norelay]
-        g=[[],[]]
-        #调用CRG求得各个餐桌上分组情况
-        CRG_result=CRG(table_size,g,cus_number)
-
-        print "CRG_result",CRG_result
-        for i in range(0,DeviceNum):
-            if (UES[i].num in CRG_result[0]):
-                UES[i].relay=True
-
-        "AP广播期间，中继收集信息收集能量，不做中继的收集能量"
-        TotalTime=10#基站广播时间10ms
-        for i in range(0,TotalTime):                    
-            for j in range(0,len(UES)):
-                if UES[j].relay==True:
-                    top1 = int(100-100*UES[j].link_e)
-                    key1 = random.randint(1,100)
-                    "中继设备随机接收信息或者能量"
-                    if key1 in range(1,top1):
-                        pass
-                    else:      
-                        egy = energy(UES[j].host, AP, 0.03125/TotalTime)
-                        UES[j].Power += egy #第j个设备收集能量
-                else:
-                    #不参与中继的设备每个时隙都在进行能量收集
-                    egy = energy(UES[j].host, AP, 0.03125/TotalTime)
-                    UES[j].Power += egy #第j个设备收集能量
-        "中继传输信息阶段"
-        for i in range(0,DeviceNum):
-            #成为中继依次给RU发送信息
-            if(queue[i].relay == True):
-                info("FD %d start sending  " % queue[i].num) 
-                # def send(src, iface, dst, loss, index,send_pkt=[]):
-                t1 = threading.Thread(target=command, args = (queue[i].host,"python Send.py '%s' %s '%s' 0.1 %d"
-                                                             % (queue[i].ip,queue[i].port,RU[queue[i].cellnum].ip,i)))#AP广播一个数据包                                      
-                # def receive(ip, iface, loss,filter="icmp", rc_pkt=[]):
-                t2 = threading.Thread(target=command, args = (RU[queue[i].cellnum].host,"python Receive.py '%s' %s 0.1"
-                                                                                        % (RU[queue[i].cellnum].ip,RU[queue[i].cellnum].port) ))
-                t2.start()
-                t1.start()
-                t1.join()
-                t2.join()
-                info("FD %d end\n" % queue[i].num)
-                queue[i].Power -= (queue[i].N1*0.00004)/len(CRG_result[0])
-                queue[i].gains += queue[i].F_UE/len(CRG_result[0])
-            else:
-                #不参与中继的设备继续进行能量收集
-                egy = energy(UES[i].host, AP, 0.03125/TotalTime)
-                UES[i].Power += egy #第j个设备收集能量
             
 
-        fair_result.append(Fairness(UES))
+        
 
         #round +1之前移动设备和 设备持续时间
+        online_device=[]
         for i in range(0,DeviceNum):
             #更新能量信息
             UES[i].powhis.append(UES[i].Power)#不管是否发送都要增加记录
@@ -271,18 +181,34 @@ def topology(DeviceNum,RUnum,Total_r):
             UES[i].host.params['position'][0]=res[0]
             UES[i].host.params['position'][1]=res[1]
             UES[i].locate=res
+
+            #根据能量来决定是online还是offline
+            temp_online=random.randint(0,100)
+            if temp_online in range(0,50):
+                UES[i].online=True
+                online_device.append(UES[i].name)
+            else:
+                UES[i].online=False
             #位置更新了更新丢包率,在传输开始的时候更新丢包率
             # UES[i].link_e=LossRate_FDS_RU(UES[], RU1)
-     
+        print "在线设备",online_device
+        print "------------------------------------------------------"
         
+        fair_result.append(Fairness(UES))
         round += 1
     
     "绘制每个设备的能量和效用变化图像"
     drawPowAndGain(UES,Total_r)
-
-
-    info("*** Fairness")
-    print(fair_result)
+    "最后绘制所有设备的fairness变化"
+    plt.figure()
+    plt.xlabel('round')
+    plt.ylabel('Fairness') 
+    data_x = [j for j in range(0,len(fair_result))]
+    labelx = range(0,round+1)
+    plt.xticks(data_x,labelx,fontsize=14)
+    plt.plot(data_x,fair_result,marker = '*')
+    plt.legend() #给图像加上图例
+    plt.savefig("%s/FairResult.png"% path) #保存图片
 
     info("*** Running CLI\n")
     CLI_wifi(net)
@@ -295,7 +221,7 @@ if __name__ == '__main__':
      #"创建网络拓扑，定义网络参数"
     DeviceNum=10 #FD总数量
     RUnum=3 #RU总数量
-    Total_r=2  #进行轮数  
+    Total_r=5  #进行轮数  
     topology(DeviceNum,RUnum,Total_r)
 
 
