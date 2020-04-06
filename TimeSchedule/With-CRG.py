@@ -26,7 +26,8 @@ from API.fairness import Fairness
 from API.RankByNSGA import Rank
 from API.NewGame import game
 from EH.LossRate import LossRate_FDS_RU
-from API.nTableGame import CRG
+
+from API.NewCRG import NewCRG
 from API.DrawPow import drawPowAndGain
 from API.Move import move
 from API.DrawLocate import drawLocate
@@ -44,7 +45,7 @@ class UE:
         self.port = port
         self.link_e = link_e
         self.locate=[self.host.params['position'][0],self.host.params['position'][1]]
-        self.speed=random.randint(1,10)
+        self.speed=random.randint(1,2)
         self.num = num
         self.Power = random.uniform(0.001, 0.0015)
         self.cellnum=cellnum #为0的时候不加入fogcell
@@ -63,12 +64,12 @@ def topology(DeviceNum,RUnum,Total_r):
     net = Mininet_wifi(controller=Controller, link=wmediumd,
                        wmediumd_mode=interference)
     #设备初始化
-    AP = net.addStation('AP', position='0,25,0', ip='10.1.0.1', mac='00:00:00:00:00:EE')
+    AP = net.addStation('AP', position='0,0,0', ip='10.1.0.1', mac='00:00:00:00:00:EE')
     #创建RU
     RU=[]
     for i in range(0,RUnum):
         t=i+1
-        temphost = net.addStation('RU%d'% t, position='%d,%d,0' % (random.randint(0, 25), random.randint(0, 25)), 
+        temphost = net.addStation('RU%d'% t, position='%d,%d,0' % (random.randint(200, 210), random.randint(200, 210)), 
                                     ip='10.2.0.%d' % t,mac='00:00:00:00:0E:%02d'%t)
         #对于每一个设备遍历在其D2D通信范围内的RU,寻求一个丢包率最小的RU的Fogcell加入
         temp=UE(temphost, 'RU%d' % t, '10.0.0.%d' % t, 'RU%d-wlan0' % t, 0.0, t, -1)#初始化的时候参数先不管
@@ -78,7 +79,7 @@ def topology(DeviceNum,RUnum,Total_r):
     for i in range(0, DeviceNum):
         t=i+1
         # 创建中继设备节点
-        temphost = net.addStation('DU%d' % t, position='%d,%d,0' % (random.randint(5, 45), random.randint(5, 45)),
+        temphost = net.addStation('DU%d' % t, position='%d,%d,0' % (random.randint(180, 200), random.randint(180, 200)),
                                   ip='10.0.0.%d' % t, mac='00:00:00:00:00:%02d' % t)
         temp = UE(temphost, 'DU%d' % t, '10.0.0.%d' % t, 'DU%d-wlan0' % t, 0.0, t, -1) 
         UES.append(temp)
@@ -107,7 +108,7 @@ def topology(DeviceNum,RUnum,Total_r):
     for i in range(0,len(UES)):
         net.addLink(UES[i].host, cls=adhoc, ssid='adhocNet', mode='g', channel=5, ht_cap='HT40+')
     
-    net.plotGraph(max_x=50, max_y=50)
+    # net.plotGraph(max_x=300, max_y=300)
 
     info("*** Starting network\n")
     net.build()
@@ -121,6 +122,10 @@ def topology(DeviceNum,RUnum,Total_r):
     if os.path.exists(path):
         shutil.rmtree(path)
     os.mkdir(path)
+
+    #D2D最大的通信距离
+    D2DMax_dis=200
+
     while round<Total_r:
         #显示当前的设备分布
         # net.plotGraph(max_x=50, max_y=50) #无返回值，不能保存，只能修改源码,同时写在此处调用无反应，只能自己实现绘制地理位置
@@ -131,7 +136,7 @@ def topology(DeviceNum,RUnum,Total_r):
         for i in range(0,RUnum):
             Fog_cell.append([])
         for i in range(0, DeviceNum):
-            if(UES[i].online):  #只有在线的设备才选择加入Fogcell
+            if(UES[i].online) and (UES[i].Power>5*0.00004):  #只有在线的设备才选择加入Fogcell,并且要能量充足，最终的能量值不能为负值
                 t=i+1
                 # 根据位置确定到达哪个RU的丢包率比较小，加入其cell
                 min=1 #选择一个丢包率最小的
@@ -144,14 +149,15 @@ def topology(DeviceNum,RUnum,Total_r):
                 print "in %d-th FD, %d-RU has been choosed,min loos:%f" %(t,index,t_loss)
                 UES[i].link_e=t_loss
                 #加入Fogcell
-                UES[i].cellnum=index
-                Fog_cell[index].append(UES[i])
+                if getDistance(UES[i].host,RU[index].host)<=D2DMax_dis:#D2D传输的最大距离
+                    UES[i].cellnum=index
+                    Fog_cell[index].append(UES[i])
 
         # print Fog_cell #打印出来的是各个__main__中各个UE实例的列表
         "在每一次Fogcell开始之前，打印各个设备的信息"
-        print "Before FogCell"
-        for i in range(0,DeviceNum):
-            print UES[i].name,UES[i].locate,"power:",UES[i].Power,"cellnum:",UES[i].cellnum,"lossrate:",UES[i].link_e
+        # print "Before FogCell"
+        # for i in range(0,DeviceNum):
+        #     print UES[i].name,UES[i].locate,"power:",UES[i].Power,"cellnum:",UES[i].cellnum,"lossrate:",UES[i].link_e
 
         "对于每一个Fogcell单独进行调用，多线程并行进行"
         thrlist=[]
@@ -165,10 +171,6 @@ def topology(DeviceNum,RUnum,Total_r):
         for i in range(0,DeviceNum):
             print UES[i].name,UES[i].locate,"power:",UES[i].Power,"cellnum:",UES[i].cellnum,"lossrate:",UES[i].link_e
         
-            
-
-        
-
         #round +1之前移动设备和 设备持续时间
         online_device=[]
         for i in range(0,DeviceNum):
@@ -182,15 +184,14 @@ def topology(DeviceNum,RUnum,Total_r):
             UES[i].host.params['position'][1]=res[1]
             UES[i].locate=res
 
+            
             #根据能量来决定是online还是offline
             temp_online=random.randint(0,100)
-            if temp_online in range(0,50):
+            if temp_online in range(0,100):
                 UES[i].online=True
                 online_device.append(UES[i].name)
             else:
                 UES[i].online=False
-            #位置更新了更新丢包率,在传输开始的时候更新丢包率
-            # UES[i].link_e=LossRate_FDS_RU(UES[], RU1)
         print "在线设备",online_device
         print "------------------------------------------------------"
         
@@ -200,9 +201,11 @@ def topology(DeviceNum,RUnum,Total_r):
     "绘制每个设备的能量和效用变化图像"
     drawPowAndGain(UES,Total_r)
     "最后绘制所有设备的fairness变化"
+    # print "fairness:",fair_result
     plt.figure()
     plt.xlabel('round')
     plt.ylabel('Fairness') 
+    plt.ylim(0,1)
     data_x = [j for j in range(0,len(fair_result))]
     labelx = range(0,round+1)
     plt.xticks(data_x,labelx,fontsize=14)
@@ -218,10 +221,10 @@ def topology(DeviceNum,RUnum,Total_r):
 
 if __name__ == '__main__':
     setLogLevel('info')
-     #"创建网络拓扑，定义网络参数"
-    DeviceNum=10 #FD总数量
-    RUnum=3 #RU总数量
-    Total_r=5  #进行轮数  
+    #"创建网络拓扑，定义网络参数"
+    DeviceNum=8 #FD总数量
+    RUnum=1 #RU总数量
+    Total_r=1  #进行轮数  
     topology(DeviceNum,RUnum,Total_r)
 
 
